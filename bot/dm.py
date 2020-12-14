@@ -3,6 +3,7 @@ import logging
 
 from discord.ext import commands
 
+import settings
 from modules import verification
 from modules.eos import get_transaction, verify_transaction
 from modules.roles import sync_roles
@@ -20,7 +21,7 @@ class DM(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        if not message.guild and not message.author.bot:
+        if not message.guild and not message.author.bot and settings.DISCORD_COMMAND_PREFIX not in message.content:
             user, created = verification.get_or_create_verification_status(self.db, message.author.id)
 
             if created:
