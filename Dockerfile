@@ -8,5 +8,6 @@ ADD requirements.txt .
 RUN pip install -r requirements.txt
 
 ADD . /opt/app
+RUN mkdir -p /var/tinydb
 
 CMD ["python", "run.py"]
