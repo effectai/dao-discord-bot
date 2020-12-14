@@ -30,28 +30,28 @@ class DM(commands.Cog):
 
                 async with message.channel.typing():
                     await asyncio.sleep(3)
-                    await message.channel.send('Send a transaction of **0.01 EOS** or **1 EFX** to **verify.efx** with memo **{}**'.format(user['code']))
+                    await message.channel.send('**How to verify:** Send a transaction of **0.01 EOS** or **1 EFX** to `verify.efx` with memo `{}`'.format(user['code']))
 
                 async with message.channel.typing():
                     await asyncio.sleep(3)
-                    await message.channel.send('After you sent your transaction, send me your transaction id. For example: `https://bloks.io/transaction/c1d43dc222811402f4bc024ab6449c2c0be1b36fdb3c18a5c76678b3e3f81937`')
+                    await message.channel.send('After you sent your transaction, send me your transaction id. For example: `https://bloks.io/transaction/484d7b15ac63367fb29258059584a739409f1f7ed1829e05c53050db6485c6f9`')
             elif user['account_name']:
                 await message.channel.send('You are already verified! Your EOS account is **{}**.'.format(user['account_name']))
             else:
-                hash = message.content.replace(' ', '')
+                tx_hash = message.content.replace(' ', '')
                 if 'http' in message.content:
-                    hash = message.content.split('/')[-1]
+                    tx_hash = message.content.split('/')[-1]
 
-                if not len(hash) == 64:
-                    return await message.channel.send('That does not seem to be a valid transaction, example of valid transaction: `https://bloks.io/transaction/c1d43dc222811402f4bc024ab6449c2c0be1b36fdb3c18a5c76678b3e3f81937`')
+                if not len(tx_hash) == 64:
+                    return await message.channel.send('That does not seem to be a valid transaction, example of valid transaction: `https://bloks.io/transaction/484d7b15ac63367fb29258059584a739409f1f7ed1829e05c53050db6485c6f9`')
 
-                transaction = get_transaction(hash)
+                transaction = get_transaction(tx_hash)
                 if not transaction:
                     return await message.channel.send('I could not verify your transaction, if you just made the transaction it can take a minute before I can see it. Try again later.')
 
-                user = verify_transaction(self.db, transaction)
-                if not user:
-                    return await message.channel.send('I could not verify your transaction, make sure to include the right memo.'.format(user['code']))
+                updated_user, response = verify_transaction(self.db, transaction)
+                if not updated_user:
+                    return await message.channel.send(response)
 
-                await message.channel.send('**You are now verified!** Your EOS account name is **{}** and DAO rank **{}**.'.format(user['account_name'], user['dao_rank']))
-                sync_roles(message.author.id, user['dao_rank'])
+                await message.channel.send('**You are now verified!** Your EOS account name is **{}** and DAO rank **{}**.'.format(updated_user['account_name'], updated_user['dao_rank']))
+                sync_roles(message.author.id, updated_user['dao_rank'])

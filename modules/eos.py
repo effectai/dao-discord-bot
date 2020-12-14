@@ -55,14 +55,18 @@ def verify_transaction(db, transaction):
 
         if user and not user[0]['account_name']:
             user = user[0]
-            user['account_name'] = account_name
-            user['tx'] = hash
-            user['dao_rank'] = calculate_dao_rank(account_name)
 
-            db.update(user, User.code == code)
-            return user
+            if signed_constitution(account_name):
+                user['account_name'] = account_name
+                user['tx'] = hash
+                user['dao_rank'] = calculate_dao_rank(account_name)
 
-    return None
+                db.update(user, User.code == code)
+                return user, ''
+            else:
+                return None, 'You did not sign the constitution yet. Sign the constitution at https://dashboard.effect.ai/dao and send me your transaction again'
+
+    return None, 'I could not verify your transaction, make sure to include the correct memo'
 
 
 def get_staking_details(account_name):
@@ -134,3 +138,17 @@ def calculate_dao_rank(account_name):
             current_rank = i
 
     return current_rank
+
+
+def signed_constitution(account_name):
+    data = node_request('get_table_rows', json={
+        'code': 'theeffectdao',
+        'scope': 'theeffectdao',
+        'upper_bound': account_name,
+        'lower_bound': account_name,
+        'table': 'member',
+        'limit': 1,
+        'json': True
+    })
+
+    return data['rows']
