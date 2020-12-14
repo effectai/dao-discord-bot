@@ -3,7 +3,7 @@ from discord import Game
 from discord.ext import commands
 from tinydb import Query
 
-from modules.eos import calculate_dao_rank
+from modules.eos import calculate_dao_rank, signed_constitution
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,11 @@ class General(commands.Cog):
             if not user:
                 return await ctx.send('No EOS account linked to this user')
 
-            account_name = user['account_name']
+            account_name = user[0]['account_name']
+
+        signed = signed_constitution(account_name)
+        if not signed:
+            return await ctx.send('{} did not sign the constitution!'.format(account_name if not discord_id else '<@{}>'.format(discord_id)))
 
         dao_rank = calculate_dao_rank(account_name)
         await ctx.send('{} has DAO rank {}'.format(account_name if not discord_id else '<@{}>'.format(discord_id), dao_rank))
