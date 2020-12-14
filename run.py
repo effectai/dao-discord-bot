@@ -20,7 +20,7 @@ if __name__ == '__main__':
 
     # Add Cogs here
     bot.add_cog(DM(bot, db))
-    bot.add_cog(General(bot))
+    bot.add_cog(General(bot, db))
 
     # Start bot
     bot.run(os.environ['DISCORD_BOT_TOKEN'])

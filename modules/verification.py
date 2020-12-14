@@ -1,5 +1,6 @@
 import random
 import string
+import time
 
 from tinydb import Query
 
@@ -20,7 +21,7 @@ def get_or_create_verification_status(db, discord_id):
     if exists:
         return exists[0], False
 
-    data = {'discord_id': discord_id, 'code': generate_verification_code(6), 'tx': None, 'account_name': None, 'dao_rank': 0}
+    data = {'discord_id': discord_id, 'code': generate_verification_code(6), 'tx': None, 'account_name': None, 'dao_rank': 0, 'last_update': int(time.time())}
     db.insert(data)
 
     return data, True

@@ -1,4 +1,5 @@
 import logging
+import time
 from datetime import datetime
 
 import requests
@@ -60,6 +61,7 @@ def verify_transaction(db, transaction):
                 user['account_name'] = account_name
                 user['tx'] = hash
                 user['dao_rank'] = calculate_dao_rank(account_name)
+                user['last_update'] = int(time.time())
 
                 db.update(user, User.code == code)
                 return user, ''
