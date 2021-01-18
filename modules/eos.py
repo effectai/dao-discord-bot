@@ -51,9 +51,13 @@ def verify_transaction(db, transaction):
         account_name = tx_data['from']
         code = tx_data['memo']
 
+        # Check if not already linked discord_id to this account
         User = Query()
-        user = db.search(User.code == code)
+        existing_user = db.search(User.account_name == account_name)
+        if existing_user and existing_user['tx']:
+            return None, 'This account is already linked to a different Discord user'
 
+        user = db.search(User.code == code)
         if user and not user[0]['account_name']:
             user = user[0]
 
@@ -153,4 +157,18 @@ def signed_constitution(account_name):
         'json': True
     })
 
-    return data['rows']
+    if data:
+        return data['rows']
+
+
+def update_account(db, account_name):
+    User = Query()
+    user = db.search(User.account_name == account_name)
+
+    if user and user[0]['account_name']:
+        user = user[0]
+        user['dao_rank'] = calculate_dao_rank(account_name)
+        db.update(user, User.account_name == account_name)
+        return user
+
+    return None
