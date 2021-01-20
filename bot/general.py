@@ -1,9 +1,10 @@
 import logging
 from discord import Game
 from discord.ext import commands
+from tinydb import Query, where
 
 from modules.eos import calculate_dao_rank, signed_constitution, update_account
-from modules.utils import get_account_name_from_context
+from modules.utils import get_account_name_from_context, create_dao_embed
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +34,8 @@ class General(commands.Cog):
             return await ctx.send('{} did not sign the constitution!'.format(account_name))
 
         dao_rank = calculate_dao_rank(account_name)
-        await ctx.send('{} has DAO rank {}'.format(account_name, dao_rank))
+        dao_embed = create_dao_embed(account_name, dao_rank)
+        await ctx.send(embed=dao_embed)
 
     @commands.command()
     async def update(self, ctx, account_name=None):
@@ -46,7 +48,15 @@ class General(commands.Cog):
         if not user:
             return await ctx.send('Could not update account')
 
-        return await ctx.send('**Updated to dao rank {}'.format(user['dao_rank']))
+        return await ctx.send('**Updated to dao rank {}**'.format(user['dao_rank']))
+
+    @commands.command()
+    async def unlink(self, ctx):
+        """Unlink EOS account"""
+        if self.db.remove(where('discord_id') == ctx.message.author.id):
+            return await ctx.send('EOS account unlinked!')
+
+        return await ctx.send('No linked EOS account found!')
 
     @commands.Cog.listener()
     async def on_ready(self):
