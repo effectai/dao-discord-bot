@@ -48,7 +48,7 @@ class General(commands.Cog):
         if not user:
             return await ctx.send('Could not update account')
 
-        return await ctx.send('**Updated to dao rank {}**'.format(user['dao_rank']))
+        await ctx.send('**Updated to dao rank {}**'.format(user['dao_rank']))
 
     @commands.command()
     async def unlink(self, ctx):
@@ -56,7 +56,7 @@ class General(commands.Cog):
         if self.db.remove(where('discord_id') == ctx.message.author.id):
             return await ctx.send('EOS account unlinked!')
 
-        return await ctx.send('No linked EOS account found!')
+        await ctx.send('No linked EOS account found!')
 
     @commands.Cog.listener()
     async def on_ready(self):
