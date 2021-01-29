@@ -17,6 +17,7 @@ if __name__ == '__main__':
 
     # Init DB
     db = TinyDB('/var/tinydb/db.json')
+    # db = TinyDB('db.json')
 
     # Add Cogs here
     bot.add_cog(DM(bot, db))
