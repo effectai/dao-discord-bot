@@ -8,6 +8,7 @@ from tinydb import TinyDB
 
 from bot.dm import DM
 from bot.general import General
+from bot.admin import Admin
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format='%(asctime)s [%(levelname)s] %(name)s: %(message)s', level=logging.INFO)
@@ -22,6 +23,7 @@ if __name__ == '__main__':
     # Add Cogs here
     bot.add_cog(DM(bot, db))
     bot.add_cog(General(bot, db))
+    bot.add_cog(Admin(bot, db))
 
     # Start bot
     bot.run(os.environ['DISCORD_BOT_TOKEN'])
