@@ -8,8 +8,6 @@ def get_qualified_discord_ids(qualification_ids):
     for i, qualification_id in enumerate(qualification_ids):
         params['filters[customFilters][qualifications][{}]'.format(i)] = qualification_id
 
-    print(params)
-
     res = requests.get(
         url='http://forceadmin.effect.ai/admin/resource/discord',
         params=params,
