@@ -3,15 +3,18 @@ import os
 import requests
 
 
-def get_qualified_discord_ids(qualification_id):
+def get_qualified_discord_ids(qualification_ids):
+    params = {'count': False}
+    for i, qualification_id in enumerate(qualification_ids):
+        params['filters[customFilters][qualifications][{}]'.format(i)] = qualification_id
+
+    print(params)
+
     res = requests.get(
         url='http://forceadmin.effect.ai/admin/resource/discord',
+        params=params,
         headers={
             'Authorization': '{}'.format(os.environ['FORCE_API_TOKEN'])
-        },
-        params={
-            'count': False,
-            'filters[customFilters][qualifications][0]': qualification_id
         },
     )
 

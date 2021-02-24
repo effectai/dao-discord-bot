@@ -25,12 +25,13 @@ class Admin(commands.Cog):
         return False
 
     @commands.command()
-    async def qualify(self, ctx, qualification_id, role):
+    async def qualify(self, ctx, qualification_ids, role):
         if not Admin._sender_is_admin(ctx):
             return
 
+        qualification_ids = qualification_ids.split(',')
         role_id = role.replace('<@', '').replace('>', '').replace('&', '')
-        discord_ids = get_qualified_discord_ids(qualification_id)
+        discord_ids = get_qualified_discord_ids(qualification_ids)
         if not discord_ids:
             return await ctx.send('No Discord users on Force with this qualification.')
 
