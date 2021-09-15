@@ -49,10 +49,3 @@ def sync_roles(discord_id, dao_rank):
         if user_role in dao_rank_roles:
             remove_role(discord_id, user_role)
 
-    # Set applicable roles
-    applicable_roles = [settings.DISCORD_DAO_MEMBER_ID]
-    if dao_rank > 0:
-        applicable_roles.append(dao_rank_roles[dao_rank - 1])
-
-    for role in applicable_roles:
-        set_role(discord_id, role)

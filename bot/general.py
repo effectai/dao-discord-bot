@@ -3,7 +3,7 @@ from discord import Game
 from discord.ext import commands
 from tinydb import Query, where
 
-from modules.eos import calculate_dao_rank, signed_constitution, update_account
+from modules.eos import signed_constitution, update_account
 from modules.utils import get_account_name_from_context, create_dao_embed
 
 logger = logging.getLogger(__name__)
@@ -33,8 +33,7 @@ class General(commands.Cog):
         if not signed:
             return await ctx.send('{} did not sign the constitution!'.format(account_name))
 
-        dao_rank = calculate_dao_rank(account_name)
-        dao_embed = create_dao_embed(account_name, dao_rank)
+        dao_embed = create_dao_embed(account_name)
         await ctx.send(embed=dao_embed)
 
     @commands.command()
