@@ -1,5 +1,5 @@
 import logging
-from discord import Game
+from discord.activity import Activity, ActivityType
 from discord.ext import commands
 from tinydb import Query, where
 
@@ -61,4 +61,5 @@ class General(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         logger.info('Logged in as {0}!'.format(self.bot.user))
-        await self.bot.change_presence(activity=Game(name='Effect Force'))
+        await self.bot.change_presence(activity=Activity(type=ActivityType.watching, name='EFX go to the moon!'))
+        
