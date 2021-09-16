@@ -47,7 +47,7 @@ class General(commands.Cog):
         if not user:
             return await ctx.send('Could not update account')
 
-        await ctx.send('**Updated to dao rank {}**'.format(user['dao_rank']))
+        await ctx.send('**Updated user {}**'.format(user['account_name']))
 
     @commands.command()
     async def unlink(self, ctx):

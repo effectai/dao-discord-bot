@@ -27,7 +27,7 @@ class DM(commands.Cog):
             if created:
                 async with message.channel.typing():
                     await asyncio.sleep(1)
-                    await message.channel.send('Hi, I am the Effect.AI verification bot! You can verify your EOS account with me, so you can show your DAO rank in the Effect Discord!')
+                    await message.channel.send('Hi, I am the Effect.AI verification bot! You can verify your EOS account with me!')
 
                 async with message.channel.typing():
                     await asyncio.sleep(3)

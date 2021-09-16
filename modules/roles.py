@@ -29,11 +29,6 @@ def remove_role(discord_id, role_id):
 def sync_roles(discord_id):
     logger.info(f'Syncing Roles for {discord_id}')
 
-    # First remove all removable roles
-    user_roles = get_member_and_roles(discord_id).json()['roles']
-    for user_role in user_roles:
-        if user_role in dao_rank_roles:
-            remove_role(discord_id, user_role)
 
     # Set applicable roles
     applicable_roles = [settings.DISCORD_DAO_MEMBER_ID]
