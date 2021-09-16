@@ -1,5 +1,8 @@
 from discord import Embed
+from prettytable.prettytable import DOUBLE_BORDER
 from tinydb import Query
+from prettytable import PrettyTable
+import textwrap
 
 
 def cool_number(num):
@@ -28,6 +31,17 @@ def get_account_name_from_context(db, ctx, account_name):
 
     return None
 
+def create_table(data):
+    # max title size: 50 chars.
+    # TODO: Need to get actual title from IPFS but think about caching proposals so that you dont have to hit the blockchain everytime.
+    table = PrettyTable(border=True, header=True)
+    table.set_style(DOUBLE_BORDER)
+    table.field_names = ["Id", "Proposal title", "Author", "Cycle", "Major vote"]
+    for row in data:
+        print(row, '\n')
+        table.add_row([row['id'], textwrap.shorten("DAO Call Recorder – August 2021 ‘invoice’ Request meeeep", width=53, placeholder="..."), row['author'], row['cycle'], 9000])
+
+    return table
 
 def create_dao_embed(account_name, dao_rank):
     embed = Embed(color=color_for_rank(dao_rank))

@@ -74,6 +74,22 @@ def verify_transaction(db, transaction):
 
     return None, 'I could not verify your transaction, make sure to include the correct memo'
 
+def get_proposals():
+    data = node_request('get_table_rows', json={
+        'code': "daoproposals",
+        'index_position': 1,
+        'json': True,
+        'limit': 20,
+        'lower_bound': "60",
+        'reverse': False,
+        'scope': "daoproposals",
+        'show_payer': False,
+        'table': "proposal",
+        'upper_bound': ""
+    })
+
+    if data:
+        return data['rows']
 
 def get_staking_details(account_name):
     data = node_request('get_table_rows', json={

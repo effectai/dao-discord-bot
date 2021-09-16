@@ -3,8 +3,8 @@ from discord import Game
 from discord.ext import commands
 from tinydb import Query, where
 
-from modules.eos import calculate_dao_rank, signed_constitution, update_account
-from modules.utils import get_account_name_from_context, create_dao_embed
+from modules.eos import calculate_dao_rank, signed_constitution, update_account, get_proposals
+from modules.utils import create_table, get_account_name_from_context, create_dao_embed
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +21,17 @@ class General(commands.Cog):
     async def ping(self, ctx):
         """Pong"""
         await ctx.send(':ping_pong: Pong!')
+    @commands.group(invoke_without_command=True)
+    async def proposals(self, ctx, *args):
+        """Get proposals on the Effect DAO"""
+        
+        print('first arg is: ', args[0])
+
+    @proposals.command()
+    async def list(self, ctx):
+        """List all proposals"""
+        table = create_table(get_proposals())
+        await ctx.send(f'```Proposals Overview\n\n{table}```')
 
     @commands.command()
     async def dao(self, ctx, account_name=None):
