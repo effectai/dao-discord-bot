@@ -55,4 +55,4 @@ class DM(commands.Cog):
                     return await message.channel.send(response)
 
                 await message.channel.send('**You are now verified!** Your EOS account name is **{}** and DAO rank **{}**.'.format(updated_user['account_name'], updated_user['dao_rank']))
-                sync_roles(message.author.id, updated_user['dao_rank'])
+                sync_roles(message.author.id)

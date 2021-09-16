@@ -26,22 +26,8 @@ def remove_role(discord_id, role_id):
     logger.info('Remove Role {} for Member {}'.format(role_id, discord_id))
     return _request(method='DELETE', url='guilds/{}/members/{}/roles/{}'.format(settings.DISCORD_SERVER_ID, discord_id, role_id))
 
-
-def sync_roles(discord_id, dao_rank):
-    logger.info('Syncing Roles for {}, DAO rank {}'.format(discord_id, dao_rank))
-
-    dao_rank_roles = [
-        settings.DISCORD_DAO_RANK_1_ID,
-        settings.DISCORD_DAO_RANK_2_ID,
-        settings.DISCORD_DAO_RANK_3_ID,
-        settings.DISCORD_DAO_RANK_4_ID,
-        settings.DISCORD_DAO_RANK_5_ID,
-        settings.DISCORD_DAO_RANK_6_ID,
-        settings.DISCORD_DAO_RANK_7_ID,
-        settings.DISCORD_DAO_RANK_8_ID,
-        settings.DISCORD_DAO_RANK_9_ID,
-        settings.DISCORD_DAO_RANK_10_ID
-    ]
+def sync_roles(discord_id):
+    logger.info(f'Syncing Roles for {discord_id}')
 
     # First remove all removable roles
     user_roles = get_member_and_roles(discord_id).json()['roles']
@@ -49,3 +35,8 @@ def sync_roles(discord_id, dao_rank):
         if user_role in dao_rank_roles:
             remove_role(discord_id, user_role)
 
+    # Set applicable roles
+    applicable_roles = [settings.DISCORD_DAO_MEMBER_ID]
+
+    for role in applicable_roles:
+        set_role(discord_id, role)
