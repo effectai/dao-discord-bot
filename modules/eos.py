@@ -1,12 +1,22 @@
 import logging
+import textwrap
 import time
 from datetime import datetime
 
+from settings.defaults import category
 import requests
 from tinydb import Query
 
 logger = logging.getLogger(__name__)
 
+def ipfs_request(hash):
+    req = requests.get(f'https://ipfs.effect.ai/ipfs/{hash}')
+    
+    logger.info('[IPFS] {}'.format(req.request.url))
+    if req.status_code == 200:
+        return req.json()
+
+    return None
 
 def node_request(endpoint, **kwargs):
     req = requests.post(
@@ -74,21 +84,37 @@ def verify_transaction(db, transaction):
 
     return None, 'I could not verify your transaction, make sure to include the correct memo'
 
-def get_proposals():
-    data = node_request('get_table_rows', json={
+def get_proposal(id=None):
+    data = None
+    config = {
         'code': "daoproposals",
         'index_position': 1,
         'json': True,
-        'limit': 20,
-        'lower_bound': "60",
         'reverse': False,
         'scope': "daoproposals",
         'show_payer': False,
         'table': "proposal",
-        'upper_bound': ""
-    })
+        'upper_bound': ""         
+    }
+    
+    if id is None:
+        config.update({'limit': 10, 'lower_bound': "", "reverse": True})
+    else:
+        config.update({'limit': 1, 'lower_bound': str(id)})
+
+    data = node_request('get_table_rows', json=config)
 
     if data:
+        for row in data['rows']:
+            # format data before returning.
+            content = ipfs_request(row['content_hash'])
+            row['url'] = 'https://dao.effect.network/proposals/{0}'.format(row['id'])
+            proposal_link = ' [read more]({0})'.format(row['url'])
+            row['proposal_costs'] = row['pay'][0]['field_0']['quantity'].replace("EFX", "**EFX**")
+            row['title'] = content['title']
+            row['description'] = textwrap.shorten(content['body'], width= 250, placeholder=proposal_link)
+            row['category'] = category[row['category']]
+
         return data['rows']
 
 def get_staking_details(account_name):

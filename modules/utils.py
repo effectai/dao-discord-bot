@@ -1,3 +1,5 @@
+from datetime import datetime
+import requests
 from discord import Embed
 from prettytable.prettytable import DOUBLE_BORDER
 from tinydb import Query
@@ -36,12 +38,27 @@ def create_table(data):
     # TODO: Need to get actual title from IPFS but think about caching proposals so that you dont have to hit the blockchain everytime.
     table = PrettyTable(border=True, header=True)
     table.set_style(DOUBLE_BORDER)
-    table.field_names = ["Id", "Proposal title", "Author", "Cycle", "Major vote"]
+    table.field_names = ["Id", "Proposal title", "Author", "Cycle", "Category"]
     for row in data:
-        print(row, '\n')
-        table.add_row([row['id'], textwrap.shorten("DAO Call Recorder – August 2021 ‘invoice’ Request meeeep", width=53, placeholder="..."), row['author'], row['cycle'], 9000])
+        # print(row, '\n')
+        table.add_row([row['id'], textwrap.shorten(row['title'], width=53, placeholder="..."), row['author'], row['cycle'], row['category']])
 
     return table
+def create_embed(self, data):
+    embed = Embed(
+        color= 0xFFA6F1,
+        title= ("**#{0}**  ".format(data['id'])) + data['title'],
+        description= data['description'],
+        url= data['url'],
+        timestamp= datetime.now()
+    )
+    embed.set_footer(icon_url=self.bot.user.avatar_url, text="Effect DAO")
+    embed.add_field(name="proposal costs", value=data['proposal_costs'])
+    embed.add_field(name="category", value=data['category'])
+    embed.add_field(name="author", value=data['author'])
+    embed.add_field(name="cycle", value=data['cycle'])
+
+    return embed
 
 def create_dao_embed(account_name, dao_rank):
     embed = Embed(color=color_for_rank(dao_rank))

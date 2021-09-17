@@ -18,3 +18,20 @@ DISCORD_DAO_RANK_10_ID = '781847921997512734'
 
 # Discord Channels
 
+# category mapping
+category = {
+    1: "Marketing",
+    2: "Design",
+    3: "Technical",
+    4: "Other"
+}
+
+# state mapping
+state = {
+    0: {
+        # ACTIVE, PENDING, PROCESSING, DRAFT
+    },
+    1: "ACCEPTED",
+    2: "REJECTED",
+    3: "EXECUTED"
+}
