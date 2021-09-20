@@ -2,9 +2,8 @@ import logging
 from discord.activity import Activity, ActivityType
 from discord.ext import commands
 from tinydb import Query, where
-from timeit import default_timer as timer
 
-from modules.eos import signed_constitution, update_account, get_proposal
+from modules.eos import calculate_efx_power, calculate_stake_age, calculate_vote_power, get_staking_details, signed_constitution, update_account, get_proposal
 from modules.utils import create_embed, create_table, get_account_name_from_context, create_dao_embed
 
 
@@ -27,8 +26,6 @@ class General(commands.Cog):
     async def proposals(self, ctx, *args):
         """Get proposals on the Effect DAO"""
         
-        print('first arg is: ', args[0])
-
     @proposals.command()
     async def list(self, ctx):
         """List all proposals"""
@@ -47,34 +44,54 @@ class General(commands.Cog):
             embed = create_embed(self, proposal)
             await ctx.send(embed=embed)
 
-    @commands.command()
-    async def dao(self, ctx, account_name=None):
+    @commands.group(invoke_without_command=True)
+    async def dao(self, ctx, *args):
+        """General DAO functionalities. Such as showing account details."""
+
+    @dao.command()
+    async def account(self, ctx, account_name=None):
         """Get DAO stats for account"""
         account_name = get_account_name_from_context(self.db, ctx, account_name)
         if not account_name:
-            return await ctx.send('No EOS account linked to this user')
+            return await ctx.send('No EOS account linked to {}'.format(ctx.author.display_name))
 
         signed = signed_constitution(account_name)
         if not signed:
             return await ctx.send('{} did not sign the constitution!'.format(account_name))
-
-        dao_embed = create_dao_embed(account_name)
+        
+        # check if user details exist in db else make the call.
+        User = Query()
+        user = self.db.search(User.account_name == account_name)[0]
+        
+        if user and user['tx'] is None:        
+            efx_staked, nfx_staked, last_claim_age, last_claim_time = get_staking_details(account_name)
+            stake_age = calculate_stake_age(last_claim_age, last_claim_time)  
+            efx_power = calculate_efx_power(efx_staked, stake_age)
+            vote_power = calculate_vote_power(efx_power, nfx_staked)
+        else:
+            efx_staked = user['efx_staked']
+            nfx_staked = user['nfx_staked']
+            vote_power = user['vote_power']
+        
+        dao_embed = create_dao_embed(
+            account_name, efx_staked, nfx_staked, vote_power
+        )
         await ctx.send(embed=dao_embed)
 
-    @commands.command()
+    @dao.command()
     async def update(self, ctx, account_name=None):
-        """Update DAO stats for account"""
+        """Update DAO stats for your account"""
         account_name = get_account_name_from_context(self.db, ctx, account_name)
         if not account_name:
             return await ctx.send('No EOS account linked to this user')
 
-        user = update_account(self.db, account_name)
+        user = update_account(self.db, ctx.author.id, account_name)
         if not user:
-            return await ctx.send('Could not update account')
+            return await ctx.send('Could not update your account')
 
         await ctx.send('**Updated user {}**'.format(user['account_name']))
 
-    @commands.command()
+    @dao.command()
     async def unlink(self, ctx):
         """Unlink EOS account"""
         if self.db.remove(where('discord_id') == ctx.message.author.id):

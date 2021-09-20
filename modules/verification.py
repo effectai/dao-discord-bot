@@ -21,7 +21,21 @@ def get_or_create_verification_status(db, discord_id):
     if exists:
         return exists[0], False
 
-    data = {'discord_id': discord_id, 'code': generate_verification_code(6), 'tx': None, 'account_name': None, 'dao_rank': 0, 'last_update': int(time.time())}
+    data = {
+        'discord_id': discord_id,
+        'code': generate_verification_code(6),
+        'tx': None,
+        'account_name': None,
+        'efx_staked': 0,
+        'nfx_staked': 0,
+        'last_claim_age': None,
+        'last_claim_time': None,
+        'efx_power': 0,
+        'vote_power': 0,
+        'stake_age': 0,
+        'last_update': int(time.time())
+    }
+    
     db.insert(data)
 
     return data, True

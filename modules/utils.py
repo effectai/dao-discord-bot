@@ -1,5 +1,4 @@
 from datetime import datetime
-import requests
 from discord import Embed
 from prettytable.prettytable import DOUBLE_BORDER
 from tinydb import Query
@@ -38,12 +37,14 @@ def create_table(data):
     # TODO: Need to get actual title from IPFS but think about caching proposals so that you dont have to hit the blockchain everytime.
     table = PrettyTable(border=True, header=True)
     table.set_style(DOUBLE_BORDER)
-    table.field_names = ["Id", "Proposal title", "Author", "Cycle", "Category"]
+    table.field_names = ["Id", "Proposal title", "Author", "Cycle", "Category", "Costs"]
     for row in data:
         # print(row, '\n')
-        table.add_row([row['id'], textwrap.shorten(row['title'], width=53, placeholder="..."), row['author'], row['cycle'], row['category']])
-
+        table.add_row([row['id'], textwrap.shorten(row['title'], width=53, placeholder="..."), row['author'], row['cycle'], row['category'], row['proposal_costs']])
+    
+    table.align["Costs"] = "r"
     return table
+
 def create_embed(self, data):
     embed = Embed(
         color= 0xFFA6F1,
@@ -53,15 +54,23 @@ def create_embed(self, data):
         timestamp= datetime.now()
     )
     embed.set_footer(icon_url=self.bot.user.avatar_url, text="Effect DAO")
-    embed.add_field(name="proposal costs", value=data['proposal_costs'])
+    embed.add_field(name="proposal costs", value=data['proposal_costs'].replace('EFX', '**EFX**'))
     embed.add_field(name="category", value=data['category'])
     embed.add_field(name="author", value=data['author'])
     embed.add_field(name="cycle", value=data['cycle'])
 
     return embed
 
-def create_dao_embed(account_name, dao_rank):
-    embed = Embed(color=color_for_rank(dao_rank))
+def create_dao_embed(account_name, efx_staged, nfx_staged, vote_power):
+    embed = Embed(
+        color=0xFFA6F1,
+        title="Account details",
+        url= "https://dao.effect.network/account/{}".format(account_name),
+    )
+    
     embed.set_thumbnail(url='https://avatar.pixeos.art/avatar/{}'.format(account_name))
-    embed.add_field(name='Account name', value=account_name, inline=True)
+    embed.add_field(name='DAO Account', value=account_name, inline=False)
+    embed.add_field(name='EFX staked', value=efx_staged, inline=False)
+    embed.add_field(name='NFX staked', value=nfx_staged, inline=False)
+    embed.add_field(name='Vote Power', value=vote_power, inline=False)
     return embed

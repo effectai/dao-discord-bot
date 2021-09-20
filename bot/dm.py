@@ -35,7 +35,7 @@ class DM(commands.Cog):
 
                 async with message.channel.typing():
                     await asyncio.sleep(3)
-                    await message.channel.send('After you sent your transaction, send me your transaction id. For example: `https://bloks.io/transaction/484d7b15ac63367fb29258059584a739409f1f7ed1829e05c53050db6485c6f9`')
+                    await message.channel.send('After you sent your transaction, send me your transaction link. For example: `https://bloks.io/transaction/484d7b15ac63367fb29258059584a739409f1f7ed1829e05c53050db6485c6f9`')
             elif user['account_name']:
                 await message.channel.send('You are already verified! Your EOS account is **{}**.'.format(user['account_name']))
             else:
@@ -54,5 +54,5 @@ class DM(commands.Cog):
                 if not updated_user:
                     return await message.channel.send(response)
 
-                await message.channel.send('**You are now verified!** Your EOS account name is **{}** and DAO rank **{}**.'.format(updated_user['account_name'], updated_user['dao_rank']))
+                await message.channel.send('**You are now verified!** Your EOS account name is **{}**.'.format(updated_user['account_name']))
                 sync_roles(message.author.id)
