@@ -1,5 +1,5 @@
 from datetime import datetime
-from discord import Embed
+from discord import Embed, Color
 from prettytable.prettytable import DOUBLE_BORDER
 from tinydb import Query
 from prettytable import PrettyTable
@@ -47,7 +47,7 @@ def create_table(data):
 
 def create_embed(self, data):
     embed = Embed(
-        color= 0xFFA6F1,
+        color= Color.blurple(),
         title= ("**#{0}**  ".format(data['id'])) + data['title'],
         description= data['description'],
         url= data['url'],
@@ -63,8 +63,8 @@ def create_embed(self, data):
 
 def create_dao_embed(account_name, efx_staged, nfx_staged, vote_power):
     embed = Embed(
-        color=0xFFA6F1,
-        title="Account details",
+        color= Color.blurple(),
+        title= "Account details",
         url= "https://dao.effect.network/account/{}".format(account_name),
     )
     
