@@ -2,9 +2,11 @@ import logging
 from discord.activity import Activity, ActivityType
 from discord.ext import commands
 from tinydb import Query, where
+from timeit import default_timer as timer
 
-from modules.eos import signed_constitution, update_account
-from modules.utils import get_account_name_from_context, create_dao_embed
+from modules.eos import signed_constitution, update_account, get_proposal
+from modules.utils import create_embed, create_table, get_account_name_from_context, create_dao_embed
+
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +23,29 @@ class General(commands.Cog):
     async def ping(self, ctx):
         """Pong"""
         await ctx.send(':ping_pong: Pong!')
+    @commands.group(invoke_without_command=True)
+    async def proposals(self, ctx, *args):
+        """Get proposals on the Effect DAO"""
+        
+        print('first arg is: ', args[0])
+
+    @proposals.command()
+    async def list(self, ctx):
+        """List all proposals"""
+        await ctx.trigger_typing()
+        table = create_table(get_proposal())
+        await ctx.send(f'```Proposals Overview\n\n{table}```')
+
+    @proposals.command()
+    async def find(self, ctx, id):
+        """Get a proposal for a given id. You can find the id when running the `!proposals list` command"""
+        if int(id) <= 0:
+            await ctx.send("id cannot be smaller than 1.", delete_after=3.0)
+        else:
+            await ctx.trigger_typing()
+            proposal = get_proposal(id=id)[0]
+            embed = create_embed(self, proposal)
+            await ctx.send(embed=embed)
 
     @commands.command()
     async def dao(self, ctx, account_name=None):
