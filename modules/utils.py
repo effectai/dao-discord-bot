@@ -64,21 +64,4 @@ def create_dao_embed(account_name, dao_rank):
     embed = Embed(color=color_for_rank(dao_rank))
     embed.set_thumbnail(url='https://avatar.pixeos.art/avatar/{}'.format(account_name))
     embed.add_field(name='Account name', value=account_name, inline=True)
-    embed.add_field(name='DAO rank', value=dao_rank, inline=True)
     return embed
-
-
-def color_for_rank(rank):
-    return [
-        0x000000,
-        0x71E3C0,
-        0xF8D247,
-        0x57C0F9,
-        0x8026F5,
-        0xEA36AC,
-        0xFB2B11,
-        0x181818,
-        0xE43AFF,
-        0xFF6FEB,
-        0xFFA6F1
-    ][rank]

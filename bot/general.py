@@ -1,12 +1,12 @@
 import logging
-from discord import Game
+from discord.activity import Activity, ActivityType
 from discord.ext import commands
 from tinydb import Query, where
 from timeit import default_timer as timer
 
-
-from modules.eos import calculate_dao_rank, signed_constitution, update_account, get_proposal
+from modules.eos import signed_constitution, update_account, get_proposal
 from modules.utils import create_embed, create_table, get_account_name_from_context, create_dao_embed
+
 
 logger = logging.getLogger(__name__)
 
@@ -58,8 +58,7 @@ class General(commands.Cog):
         if not signed:
             return await ctx.send('{} did not sign the constitution!'.format(account_name))
 
-        dao_rank = calculate_dao_rank(account_name)
-        dao_embed = create_dao_embed(account_name, dao_rank)
+        dao_embed = create_dao_embed(account_name)
         await ctx.send(embed=dao_embed)
 
     @commands.command()
@@ -73,7 +72,7 @@ class General(commands.Cog):
         if not user:
             return await ctx.send('Could not update account')
 
-        await ctx.send('**Updated to dao rank {}**'.format(user['dao_rank']))
+        await ctx.send('**Updated user {}**'.format(user['account_name']))
 
     @commands.command()
     async def unlink(self, ctx):
@@ -86,4 +85,5 @@ class General(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         logger.info('Logged in as {0}!'.format(self.bot.user))
-        await self.bot.change_presence(activity=Game(name='Effect Force'))
+        await self.bot.change_presence(activity=Activity(type=ActivityType.watching, name='EFX go to the moon!'))
+        
