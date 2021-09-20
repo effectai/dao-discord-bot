@@ -64,7 +64,6 @@ def verify_transaction(db, transaction):
             if signed_constitution(account_name):
                 user['account_name'] = account_name
                 user['tx'] = hash
-                user['dao_rank'] = calculate_dao_rank(account_name)
                 user['last_update'] = int(time.time())
 
                 db.update(user, User.code == code)
@@ -117,35 +116,6 @@ def calculate_power(efx_staked, last_claim_age, last_claim_time):
     stake_age = calculate_stake_age(last_claim_age, last_claim_time)
     return float(efx_staked + float(stake_age / (200 * 24 * 3600) * efx_staked))
 
-
-def calculate_dao_rank(account_name):
-    logger.info('Calculating DAO rank for {}'.format(account_name))
-
-    efx_staked, nfx_staked, last_claim_age, last_claim_time = get_staking_details(account_name)
-    power = calculate_power(efx_staked, last_claim_age, last_claim_time)
-
-    requirements = [
-        (0, 0),
-        (200000, 10000),
-        (348326, 15505),
-        (606655, 24041),
-        (1056569, 37276),
-        (1840152, 57797),
-        (3204864, 89615),
-        (5581687, 138950),
-        (9721233, 215443),
-        (16930792, 334048),
-        (29487176, 517947)
-    ]
-
-    current_rank = 0
-    for i, (power_required, nfx_stake_required) in enumerate(requirements):
-        if power >= power_required and nfx_staked >= nfx_stake_required:
-            current_rank = i
-
-    return current_rank
-
-
 def signed_constitution(account_name):
     data = node_request('get_table_rows', json={
         'code': 'theeffectdao',
@@ -167,7 +137,6 @@ def update_account(db, account_name):
 
     if user and user[0]['account_name']:
         user = user[0]
-        user['dao_rank'] = calculate_dao_rank(account_name)
         db.update(user, User.account_name == account_name)
         return user
 
