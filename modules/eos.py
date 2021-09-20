@@ -189,6 +189,37 @@ def signed_constitution(account_name):
     if data:
         return data['rows']
 
+def get_config():
+    config_data = node_request('get_table_rows', json={
+        'code': "daoproposals",
+        'index_position': 1,
+        'json': True,
+        'scope': "daoproposals",
+        'show_payer': False,
+        'table': "config",
+    })
+
+    config = config_data['rows'] if config_data else None
+    
+    return config[0]
+
+def get_cycle(id=None):
+    if id:
+        cycle_data = node_request('get_table_rows', json={
+            'code': "daoproposals",
+            'index_position': 1,
+            'json': True,
+            'reverse': True,
+            'scope': "daoproposals",
+            'show_payer': False,
+            'limit': 1,
+            'table': "cycle",
+            'lower_bound': f"{id}"         
+        })
+    
+    cycle = cycle_data['rows'] if cycle_data else None
+    return cycle[0]
+
 
 def update_account(db, discord_id, account_name):
     User = Query()

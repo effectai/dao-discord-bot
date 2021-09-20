@@ -45,32 +45,19 @@ def create_table(data):
     table.align["Costs"] = "r"
     return table
 
-def create_embed(self, data):
+def create_embed(self, data, inline=True):
     embed = Embed(
-        color= Color.blurple(),
-        title= ("**#{0}**  ".format(data['id'])) + data['title'],
-        description= data['description'],
-        url= data['url'],
-        timestamp= datetime.now()
+        color=Color.blurple(),
+        title=data['title'],
+        url=data['url'],
+        timestamp=datetime.now()
     )
+    if 'description' in data:
+        embed.description = data['description']
+
     embed.set_footer(icon_url=self.bot.user.avatar_url, text="Effect DAO")
-    embed.add_field(name="proposal costs", value=data['proposal_costs'].replace('EFX', '**EFX**'))
-    embed.add_field(name="category", value=data['category'])
-    embed.add_field(name="author", value=data['author'])
-    embed.add_field(name="cycle", value=data['cycle'])
 
-    return embed
+    for entry in data['body']:
+        embed.add_field(name=entry, value=data['body'][entry], inline=inline)
 
-def create_dao_embed(account_name, efx_staged, nfx_staged, vote_power):
-    embed = Embed(
-        color= Color.blurple(),
-        title= "Account details",
-        url= "https://dao.effect.network/account/{}".format(account_name),
-    )
-    
-    embed.set_thumbnail(url='https://avatar.pixeos.art/avatar/{}'.format(account_name))
-    embed.add_field(name='DAO Account', value=account_name, inline=False)
-    embed.add_field(name='EFX staked', value=efx_staged, inline=False)
-    embed.add_field(name='NFX staked', value=nfx_staged, inline=False)
-    embed.add_field(name='Vote Power', value=vote_power, inline=False)
     return embed

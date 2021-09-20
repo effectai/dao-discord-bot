@@ -3,8 +3,8 @@ from discord.activity import Activity, ActivityType
 from discord.ext import commands
 from tinydb import Query, where
 
-from modules.eos import calculate_efx_power, calculate_stake_age, calculate_vote_power, get_staking_details, signed_constitution, update_account, get_proposal
-from modules.utils import create_embed, create_table, get_account_name_from_context, create_dao_embed
+from modules.eos import calculate_efx_power, calculate_stake_age, calculate_vote_power, get_config, get_cycle, get_staking_details, signed_constitution, update_account, get_proposal
+from modules.utils import create_embed, create_table, get_account_name_from_context
 
 
 logger = logging.getLogger(__name__)
@@ -41,7 +41,20 @@ class General(commands.Cog):
         else:
             await ctx.trigger_typing()
             proposal = get_proposal(id=id)[0]
-            embed = create_embed(self, proposal)
+
+            data = {
+                "title": "**#{0}** {1}".format(proposal['id'], proposal['title']),
+                "description": proposal['description'],
+                "url": proposal['url'],
+                "body": {
+                    "proposal costs": proposal['proposal_costs'].replace('EFX', '**EFX**'),
+                    "category": proposal['category'],
+                    "author": proposal['author'],
+                    "cycle": proposal['cycle']
+                }
+            }
+
+            embed = create_embed(self, data)
             await ctx.send(embed=embed)
 
     @commands.group(invoke_without_command=True)
@@ -73,10 +86,19 @@ class General(commands.Cog):
             nfx_staked = user['nfx_staked']
             vote_power = user['vote_power']
         
-        dao_embed = create_dao_embed(
-            account_name, efx_staked, nfx_staked, vote_power
-        )
-        await ctx.send(embed=dao_embed)
+        data = {
+            "title": "Account details",
+            "url": "https://dao.effect.network/account/{}".format(account_name),
+            "body": {
+                "DAO Account": account_name,
+                "EFX staked": efx_staked,
+                "NFX staked": nfx_staked,
+                "Vote Power": vote_power
+            }
+        }
+
+        embed = create_embed(self, data, inline=False)
+        await ctx.send(embed=embed)
 
     @dao.command()
     async def update(self, ctx, account_name=None):
@@ -99,6 +121,15 @@ class General(commands.Cog):
 
         await ctx.send('No linked EOS account found!')
 
+    @commands.command()
+    async def cycle(self, ctx):
+        """Show cycle stats, how long till the next cycle. etc."""
+        config = get_config()
+        cycle = get_cycle(config['current_cycle'])
+        
+
+        print(config, cycle)
+    
     @commands.Cog.listener()
     async def on_ready(self):
         logger.info('Logged in as {0}!'.format(self.bot.user))
