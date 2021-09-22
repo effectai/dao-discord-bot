@@ -74,17 +74,17 @@ class General(commands.Cog):
         
         # check if user details exist in db else make the call.
         User = Query()
-        user = self.db.search(User.account_name == account_name)[0]
-        
-        if user and user['tx'] is None:        
+        user = self.db.search(User.account_name == account_name)
+
+        if not user:   
             efx_staked, nfx_staked, last_claim_age, last_claim_time = get_staking_details(account_name)
             stake_age = calculate_stake_age(last_claim_age, last_claim_time)  
             efx_power = calculate_efx_power(efx_staked, stake_age)
             vote_power = calculate_vote_power(efx_power, nfx_staked)
         else:
-            efx_staked = user['efx_staked']
-            nfx_staked = user['nfx_staked']
-            vote_power = user['vote_power']
+            efx_staked = user[0]['efx_staked']
+            nfx_staked = user[0]['nfx_staked']
+            vote_power = user[0]['vote_power']
         
         data = {
             "title": "Account details",
