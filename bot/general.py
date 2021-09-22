@@ -1,7 +1,8 @@
 import logging
 from discord.activity import Activity, ActivityType
 from discord.ext import commands
-from tinydb import Query, where
+from tinydb import where
+import arrow
 
 from modules.eos import calculate_efx_power, calculate_stake_age, calculate_vote_power, get_config, get_cycle, get_staking_details, signed_constitution, update_account, get_proposal
 from modules.utils import create_embed, create_table, get_account_name_from_context
@@ -102,7 +103,7 @@ class General(commands.Cog):
         if not user:
             return await ctx.send('Could not update your account')
 
-        await ctx.send('**Updated user {}**'.format(user['account_name']))
+        return await ctx.send('**Updated user {}**'.format(user['account_name']))
 
     @dao.command()
     async def unlink(self, ctx):
@@ -118,8 +119,35 @@ class General(commands.Cog):
         config = get_config()
         cycle = get_cycle(config['current_cycle'])
         
+        now = arrow.utcnow()
+        started_at = arrow.get(cycle['start_time'])
+        started_at_str = started_at.humanize(now, granularity=["day", "hour", "minute"])
+        started_at_dt = started_at.format("D MMMM YYYY HH:mm:ss ZZZ")
 
-        print(config, cycle)
+        ends_at = arrow.get(started_at.timestamp() + config['cycle_duration_sec'])    
+        ends_at_str = ends_at.humanize(now, granularity=["day", "hour", "minute"])
+        ends_at_dt = ends_at.format("D MMMM YYYY HH:mm:ss ZZZ")
+
+        vote_duration = arrow.get(started_at.timestamp() + config['cycle_voting_duration_sec'])
+        vote_duration_str = vote_duration.humanize(now, granularity=["day", "hour", "minute"])
+        vote_duration_dt = vote_duration.format("D MMMM YYYY HH:mm:ss ZZZ")
+        
+        data = {
+            "title": "Cycle details",
+            "url": "https://dao.effect.network/proposals",
+            "body": {
+                "Current cycle": config['current_cycle'],
+                "Cycle start time": "{0}\n(**{1}**)".format(started_at_dt, started_at_str),
+                "Cycle end time": "{0}\n(**{1}**)".format(ends_at_dt, ends_at_str),
+                "Voting time": "{0}\n(**{1}**)".format(vote_duration_dt, vote_duration_str),
+                "Budget": cycle['budget'][0]['quantity'].replace("EFX", "**EFX**"),
+            }
+        }
+
+        print(config)
+        
+        embed = create_embed(self, data, inline=False)
+        return await ctx.send(embed=embed)
     
     @commands.Cog.listener()
     async def on_ready(self):
