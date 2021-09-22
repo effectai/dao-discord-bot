@@ -17,16 +17,16 @@ class Admin(commands.Cog):
         self.db = db
 
     @staticmethod
-    def _sender_is_admin(ctx):
+    def _sender_is_effect_member(ctx):
         for role in ctx.author.roles:
-            if str(role.id) == settings.DISCORD_ADMIN_ROLE_ID:
+            if str(role.id) == settings.DISCORD_EFFECT_TEAM_ROLE_ID:
                 return True
 
         return False
 
     @commands.command()
     async def qualify(self, ctx, qualification_ids, role):
-        if not Admin._sender_is_admin(ctx):
+        if not Admin._sender_is_effect_member(ctx):
             return
 
         qualification_ids = qualification_ids.split(',')

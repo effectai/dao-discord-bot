@@ -9,6 +9,7 @@ requests = "*"
 tinydb = "==4.3.0"
 prettytable = "*"
 arrow = "*"
+apscheduler = "*"
 
 [dev-packages]
 
