@@ -80,13 +80,6 @@ def verify_transaction(db, transaction):
 
                 user['account_name'] = account_name
                 user['tx'] = hash
-                user['efx_staked'] = efx_staked
-                user['nfx_staked'] = nfx_staked
-                user['last_claim_age'] = last_claim_age
-                user['last_claim_time'] = last_claim_time
-                user['vote_power'] = vote_power
-                user['efx_power'] = efx_power
-                user['stake_age'] = stake_age
                 user['last_update'] = int(time.time())
 
                 db.update(user, User.code == code)
@@ -227,20 +220,8 @@ def update_account(db, discord_id, account_name):
 
     if user and user[0]['account_name']:
         user = user[0]
-        # get staking details, calculate vote_power and stake age on those details.
-        efx_staked, nfx_staked, last_claim_age, last_claim_time = get_staking_details(account_name)
-        stake_age = calculate_stake_age(last_claim_age, last_claim_time)
-        efx_power = calculate_efx_power(efx_staked, stake_age)
-        vote_power = calculate_vote_power(efx_power, nfx_staked)
 
         user['account_name'] = account_name
-        user['efx_staked'] = efx_staked
-        user['nfx_staked'] = nfx_staked
-        user['last_claim_age'] = last_claim_age
-        user['last_claim_time'] = last_claim_time.isoformat()
-        user['efx_power'] = efx_power
-        user['vote_power'] = vote_power
-        user['stake_age'] = stake_age
         user['last_update'] = int(time.time())
 
         db.update(user, User.account_name == account_name)

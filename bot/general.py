@@ -72,20 +72,11 @@ class General(commands.Cog):
         if not signed:
             return await ctx.send('{} did not sign the constitution!'.format(account_name))
         
-        # check if user details exist in db else make the call.
-        User = Query()
-        user = self.db.search(User.account_name == account_name)
+        efx_staked, nfx_staked, last_claim_age, last_claim_time = get_staking_details(account_name)
+        stake_age = calculate_stake_age(last_claim_age, last_claim_time)  
+        efx_power = calculate_efx_power(efx_staked, stake_age)
+        vote_power = calculate_vote_power(efx_power, nfx_staked)
 
-        if not user:   
-            efx_staked, nfx_staked, last_claim_age, last_claim_time = get_staking_details(account_name)
-            stake_age = calculate_stake_age(last_claim_age, last_claim_time)  
-            efx_power = calculate_efx_power(efx_staked, stake_age)
-            vote_power = calculate_vote_power(efx_power, nfx_staked)
-        else:
-            efx_staked = user[0]['efx_staked']
-            nfx_staked = user[0]['nfx_staked']
-            vote_power = user[0]['vote_power']
-        
         data = {
             "title": "Account details",
             "url": "https://dao.effect.network/account/{}".format(account_name),
@@ -98,7 +89,7 @@ class General(commands.Cog):
         }
 
         embed = create_embed(self, data, inline=False)
-        await ctx.send(embed=embed)
+        return await ctx.send(embed=embed)
 
     @dao.command()
     async def update(self, ctx, account_name=None):
