@@ -3,6 +3,7 @@ import textwrap
 import time
 from datetime import datetime
 
+import arrow
 from settings.defaults import category
 import requests
 from tinydb import Query
@@ -90,16 +91,49 @@ class EOS():
 
         return None, 'I could not verify your transaction, make sure to include the correct memo'
 
-    def get_all_proposals(self):
-        """"""
+    def get_latest_proposal(self):
+
         config = {
             'code': "daoproposals",
             'scope': "daoproposals",
             'table': "proposal",
             'json': True,
-            'limit': 20
+            'limit': 1,
+            'reverse': True,
         }
+        data = self.node_request('get_table_rows', json=config)
+        if 'rows' in data: return data['rows'][0]
+        else: return None
 
+    def get_proposal(self, id=None, limit=20, ipfs=True):
+
+        config = {
+            'code': "daoproposals",
+            'scope': "daoproposals",
+            'table': "proposal",
+            'json': True,
+            'limit': limit
+        }
+        cycle_config = self.get_config()
+
+        if id is not None:
+            config = {
+            'code': "daoproposals",
+            'scope': "daoproposals",
+            'table': "proposal",
+            'json': True,
+            'limit': 1,
+            'lower_bound': str(id)
+            }
+            
+            data = self.node_request('get_table_rows', json=config)
+
+            if data and ipfs: 
+                self.assign_statuses(data['rows'][0], cycle_config)
+                self.format_proposal(data['rows'][0])
+            return data['rows']
+
+        
         if self.next_key: config['lower_bound'] = self.next_key 
         
         data = self.node_request('get_table_rows', json=config)
@@ -108,79 +142,54 @@ class EOS():
         self.next_key = data['next_key']
 
         if not self.proposals:
-            print("")
             self.proposals = data['rows']
         else: 
             self.proposals = [*self.proposals, *data['rows']]
 
         for proposal in self.proposals:
-            status = None
-            if not proposal['status']:
-                status = 'CLOSED'
+            
+            self.assign_statuses(proposal, cycle_config)
+
+            if proposal['status'] == 'ACTIVE' or proposal['status'] == 'PENDING':
+                self.format_proposal(proposal)
+    
+        # Break statement
+        if self.more_proposals: self.get_proposal(id, limit, ipfs)
+
+        return self.proposals
+
+
+    def assign_statuses(self, proposal, cycle_config):
+
+        if 'status' not in proposal:
+            proposal['status'] = 'CLOSED'
             if proposal['state'] == 0:
                 if not proposal['cycle']:
-                    status = 'DRAFT'
+                    proposal['status'] = 'DRAFT'
                 else:
-                    if proposal['cycle'] == self.get_config()['current_cycle']:
+                    cycle = self.get_cycle(proposal['cycle'])
+                    now_dt = arrow.utcnow().datetime
+                    # check if cycle start time (including voting duration) datetime is greater than today's datetime
+                    if cycle and proposal['cycle'] == cycle_config['current_cycle'] and arrow.get(cycle[0]['start_time']).shift(seconds= +cycle_config['cycle_voting_duration_sec']).datetime > now_dt:
+                        proposal['status'] = 'ACTIVE'    
+                    elif cycle and arrow.get(cycle[0]['start_time']).shift(seconds= +cycle_config['cycle_voting_duration_sec']).datetime < now_dt:
+                        proposal['status'] = 'PROCESSING'
+                    elif cycle and int(proposal['cycle']) < int(cycle_config['current_cycle']):
+                        proposal['status'] = 'PROCESSING'
+                    
+                    else: proposal['status'] = 'PENDING'
 
 
-                        """
-                        if (proposalCycle && proposal.cycle === this.$dao.proposalConfig.current_cycle && this.$moment(proposalCycle.start_time + 'Z').add(this.$dao.proposalConfig.cycle_voting_duration_sec, 'seconds').isAfter()) {
-                            status = 'ACTIVE'
-                        } else if (proposalCycle && this.$moment(proposalCycle.start_time + 'Z').add(this.$dao.proposalConfig.cycle_voting_duration_sec, 'seconds').isBefore()) {
-                            status = 'PROCESSING'
-                        } else if (proposalCycle && proposal.cycle < this.currentCycle) {
-                           status = 'PROCESSING'
-                        } else {
-                           status = 'PENDING'
-                        }
-                        """
-
-                        # ACTIVE
-                    elif True:
-                        # Processing 
-                    elif True:
-                        # Processing
-                    else:
-                        # PENDING
-
-        # Break statement
-        if self.more_proposals: self.get_all_proposals()
-
-
-
-    def get_proposal(self, id=None, ipfs=True, limit=10):
-        data = None
-        config = {
-            'code': "daoproposals",
-            'index_position': 1,
-            'json': True,
-            'reverse': False,
-            'scope': "daoproposals",
-            'show_payer': False,
-            'table': "proposal",
-            'upper_bound': ""         
-        }
+    def format_proposal(self, proposal):
+        content = self.ipfs_request(proposal['content_hash'])
+        proposal['url'] = 'https://dao.effect.network/proposals/{0}'.format(proposal['id'])
+        proposal_link = ' [read more]({0})'.format(proposal['url'])
+        proposal['proposal_costs'] = proposal['pay'][0]['field_0']['quantity']
+        proposal['title'] = content['title']
+        proposal['description'] = textwrap.shorten(content['body'], width= 250, placeholder=proposal_link)
+        proposal['category'] = category[proposal['category']]
         
-        if id is None:
-            config.update({'limit': limit, 'lower_bound': "", "reverse": True})
-        else:
-            config.update({'limit': 1, 'lower_bound': str(id)})
-
-        data = self. node_request('get_table_rows', json=config)
-        if data:
-            for row in data['rows']:
-                # format data before returning.
-                if ipfs:        
-                    content = self.ipfs_request(row['content_hash'])
-                    row['url'] = 'https://dao.effect.network/proposals/{0}'.format(row['id'])
-                    proposal_link = ' [read more]({0})'.format(row['url'])
-                    row['proposal_costs'] = row['pay'][0]['field_0']['quantity']
-                    row['title'] = content['title']
-                    row['description'] = textwrap.shorten(content['body'], width= 250, placeholder=proposal_link)
-                    row['category'] = category[row['category']]
-
-            return data['rows']
+        return proposal
 
     def get_staking_details(self, account_name):
         data = self.node_request('get_table_rows', json={
