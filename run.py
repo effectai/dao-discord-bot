@@ -1,3 +1,4 @@
+from bot.reminder import Reminder
 from bot.custom_help import CustomHelp
 import logging
 import os
@@ -24,6 +25,7 @@ if __name__ == '__main__':
 
     # Add Cogs here
     bot.add_cog(DM(bot, db))
+    bot.add_cog(Reminder(bot, db))
     bot.add_cog(General(bot, db))
     bot.add_cog(Admin(bot, db))
 

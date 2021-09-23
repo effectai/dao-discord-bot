@@ -1,12 +1,8 @@
-from settings.defaults import DISCORD_DAO_SPAM_CHANNEL
-from bot.admin import Admin
 import logging
-from apscheduler.events import EVENT_JOB_ERROR
 from discord.activity import Activity, ActivityType
 from discord.ext import commands
 from tinydb import where
 import arrow
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from modules.eos import calculate_efx_power, calculate_stake_age, calculate_vote_power, get_config, get_cycle, get_staking_details, signed_constitution, update_account, get_proposal
 from modules.utils import create_embed, create_table, get_account_name_from_context
@@ -22,7 +18,6 @@ class General(commands.Cog):
     def __init__(self, bot, db):
         self.bot = bot
         self.db = db
-        self.scheduler = AsyncIOScheduler()
 
     @commands.command()
     async def ping(self, ctx):
@@ -151,34 +146,9 @@ class General(commands.Cog):
         
         embed = create_embed(self, data, inline=False)
         return await ctx.send(embed=embed)
-    
-    async def notify(self):
-        channel = self.bot.get_channel(DISCORD_DAO_SPAM_CHANNEL)
-        await channel.send(f":warning:The weekly DAO CALL is starting:bangbang: Join us in the voice channel:warning:")
-
-    @commands.command(hidden=True)
-    async def reschedule(self, ctx, day_of_week='wed', hour=17, minute=0):
-        "Reschedule DAO call meeting time to a different time."
-        if not Admin._sender_is_effect_member(ctx):
-            return 
-        
-        try:
-            self.scheduler.reschedule_job('dao_call_notify', trigger='cron', day_of_week=day_of_week, hour=hour, minute=minute)
-        
-        except EVENT_JOB_ERROR:
-            return await ctx.send("something went wrong with rescheduling...")
-        
-        return await ctx.send("changed schedule.")
-        
-
+            
     @commands.Cog.listener()
     async def on_ready(self):
-
-        # DAO call notification on discord.
-        self.scheduler.add_job(self.notify, trigger='cron', day_of_week='wed', hour=17, minute=0, id="dao_call_notify")
-
-        #starting the scheduler
-        self.scheduler.start()
 
         logger.info('Logged in as {0}!'.format(self.bot.user))
         await self.bot.change_presence(activity=Activity(type=ActivityType.watching, name='EFX go to the moon!'))
