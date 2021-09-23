@@ -1,12 +1,22 @@
 import logging
+import textwrap
 import time
 from datetime import datetime
 
+from settings.defaults import category
 import requests
 from tinydb import Query
 
 logger = logging.getLogger(__name__)
 
+def ipfs_request(hash):
+    req = requests.get(f'https://ipfs.effect.ai/ipfs/{hash}')
+    
+    logger.info('[IPFS] {}'.format(req.request.url))
+    if req.status_code == 200:
+        return req.json()
+
+    return None
 
 def node_request(endpoint, **kwargs):
     req = requests.post(
@@ -62,9 +72,14 @@ def verify_transaction(db, transaction):
             user = user[0]
 
             if signed_constitution(account_name):
+                # get staking details, calculate vote_power and stake age on those details.
+                efx_staked, nfx_staked, last_claim_age, last_claim_time = get_staking_details(account_name)
+                stake_age = calculate_stake_age(last_claim_age, last_claim_time)
+                efx_power = calculate_efx_power(efx_staked, stake_age)
+                vote_power = calculate_vote_power(efx_power, nfx_staked)
+
                 user['account_name'] = account_name
                 user['tx'] = hash
-                user['dao_rank'] = calculate_dao_rank(account_name)
                 user['last_update'] = int(time.time())
 
                 db.update(user, User.code == code)
@@ -74,6 +89,38 @@ def verify_transaction(db, transaction):
 
     return None, 'I could not verify your transaction, make sure to include the correct memo'
 
+def get_proposal(id=None):
+    data = None
+    config = {
+        'code': "daoproposals",
+        'index_position': 1,
+        'json': True,
+        'reverse': False,
+        'scope': "daoproposals",
+        'show_payer': False,
+        'table': "proposal",
+        'upper_bound': ""         
+    }
+    
+    if id is None:
+        config.update({'limit': 10, 'lower_bound': "", "reverse": True})
+    else:
+        config.update({'limit': 1, 'lower_bound': str(id)})
+
+    data = node_request('get_table_rows', json=config)
+
+    if data:
+        for row in data['rows']:
+            # format data before returning.
+            content = ipfs_request(row['content_hash'])
+            row['url'] = 'https://dao.effect.network/proposals/{0}'.format(row['id'])
+            proposal_link = ' [read more]({0})'.format(row['url'])
+            row['proposal_costs'] = row['pay'][0]['field_0']['quantity']
+            row['title'] = content['title']
+            row['description'] = textwrap.shorten(content['body'], width= 250, placeholder=proposal_link)
+            row['category'] = category[row['category']]
+
+        return data['rows']
 
 def get_staking_details(account_name):
     data = node_request('get_table_rows', json={
@@ -113,38 +160,13 @@ def calculate_stake_age(last_claim_age, last_claim_time):
     return min(stake_age_limit, last_claim_age + claim_diff.total_seconds())
 
 
-def calculate_power(efx_staked, last_claim_age, last_claim_time):
-    stake_age = calculate_stake_age(last_claim_age, last_claim_time)
+def calculate_efx_power(efx_staked, stake_age):
     return float(efx_staked + float(stake_age / (200 * 24 * 3600) * efx_staked))
 
-
-def calculate_dao_rank(account_name):
-    logger.info('Calculating DAO rank for {}'.format(account_name))
-
-    efx_staked, nfx_staked, last_claim_age, last_claim_time = get_staking_details(account_name)
-    power = calculate_power(efx_staked, last_claim_age, last_claim_time)
-
-    requirements = [
-        (0, 0),
-        (200000, 10000),
-        (348326, 15505),
-        (606655, 24041),
-        (1056569, 37276),
-        (1840152, 57797),
-        (3204864, 89615),
-        (5581687, 138950),
-        (9721233, 215443),
-        (16930792, 334048),
-        (29487176, 517947)
-    ]
-
-    current_rank = 0
-    for i, (power_required, nfx_stake_required) in enumerate(requirements):
-        if power >= power_required and nfx_staked >= nfx_stake_required:
-            current_rank = i
-
-    return current_rank
-
+def calculate_vote_power (efx_power = 0, nfx_staked = 0):
+    efx = int(efx_power / 20)
+    nfx = int(nfx_staked)
+    return min(efx, nfx)
 
 def signed_constitution(account_name):
     data = node_request('get_table_rows', json={
@@ -160,14 +182,48 @@ def signed_constitution(account_name):
     if data:
         return data['rows']
 
+def get_config():
+    config_data = node_request('get_table_rows', json={
+        'code': "daoproposals",
+        'index_position': 1,
+        'json': True,
+        'scope': "daoproposals",
+        'show_payer': False,
+        'table': "config",
+    })
 
-def update_account(db, account_name):
+    config = config_data['rows'] if config_data else None
+    
+    return config[0]
+
+def get_cycle(id=None):
+    if id:
+        cycle_data = node_request('get_table_rows', json={
+            'code': "daoproposals",
+            'index_position': 1,
+            'json': True,
+            'reverse': True,
+            'scope': "daoproposals",
+            'show_payer': False,
+            'limit': 1,
+            'table': "cycle",
+            'lower_bound': f"{id}"         
+        })
+    
+    cycle = cycle_data['rows'] if cycle_data else None
+    return cycle[0]
+
+
+def update_account(db, discord_id, account_name):
     User = Query()
-    user = db.search(User.account_name == account_name)
+    user = db.search(User.discord_id == discord_id)
 
     if user and user[0]['account_name']:
         user = user[0]
-        user['dao_rank'] = calculate_dao_rank(account_name)
+
+        user['account_name'] = account_name
+        user['last_update'] = int(time.time())
+
         db.update(user, User.account_name == account_name)
         return user
 

@@ -1,3 +1,4 @@
+from bot.custom_help import CustomHelp
 import logging
 import os
 
@@ -15,6 +16,7 @@ logging.basicConfig(format='%(asctime)s [%(levelname)s] %(name)s: %(message)s', 
 
 if __name__ == '__main__':
     bot = commands.Bot(command_prefix=settings.DISCORD_COMMAND_PREFIX)
+    bot.help_command = CustomHelp()
 
     # Init DB
     db = TinyDB('/var/tinydb/db.json')

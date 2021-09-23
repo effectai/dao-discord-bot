@@ -1,5 +1,9 @@
-from discord import Embed
+from datetime import datetime
+from discord import Embed, Color
+from prettytable.prettytable import DOUBLE_BORDER
 from tinydb import Query
+from prettytable import PrettyTable
+import textwrap
 
 
 def cool_number(num):
@@ -28,26 +32,32 @@ def get_account_name_from_context(db, ctx, account_name):
 
     return None
 
+def create_table(data):
+    # max title size: 50 chars.
+    # TODO: Need to get actual title from IPFS but think about caching proposals so that you dont have to hit the blockchain everytime.
+    table = PrettyTable(border=True, header=True)
+    table.set_style(DOUBLE_BORDER)
+    table.field_names = ["Id", "Proposal title", "Author", "Cycle", "Category", "Costs"]
+    for row in data:
+        # print(row, '\n')
+        table.add_row([row['id'], textwrap.shorten(row['title'], width=53, placeholder="..."), row['author'], row['cycle'], row['category'], row['proposal_costs']])
+    
+    table.align["Costs"] = "r"
+    return table
 
-def create_dao_embed(account_name, dao_rank):
-    embed = Embed(color=color_for_rank(dao_rank))
-    embed.set_thumbnail(url='https://avatar.pixeos.art/avatar/{}'.format(account_name))
-    embed.add_field(name='Account name', value=account_name, inline=True)
-    embed.add_field(name='DAO rank', value=dao_rank, inline=True)
+def create_embed(self, data, inline=True):
+    embed = Embed(
+        color=Color.blurple(),
+        title=data['title'],
+        url=data['url'],
+        timestamp=datetime.now()
+    )
+    if 'description' in data:
+        embed.description = data['description']
+
+    embed.set_footer(icon_url=self.bot.user.avatar_url, text="Effect DAO")
+
+    for entry in data['body']:
+        embed.add_field(name=entry, value=data['body'][entry], inline=inline)
+
     return embed
-
-
-def color_for_rank(rank):
-    return [
-        0x000000,
-        0x71E3C0,
-        0xF8D247,
-        0x57C0F9,
-        0x8026F5,
-        0xEA36AC,
-        0xFB2B11,
-        0x181818,
-        0xE43AFF,
-        0xFF6FEB,
-        0xFFA6F1
-    ][rank]
