@@ -4,7 +4,6 @@ from discord.ext import commands
 from tinydb import where
 import arrow
 
-from modules.eos import calculate_efx_power, calculate_stake_age, calculate_vote_power, get_config, get_cycle, get_staking_details, signed_constitution, update_account, get_proposal
 from modules.utils import create_embed, create_table, get_account_name_from_context
 
 
@@ -15,9 +14,10 @@ class General(commands.Cog):
     """General bot functionality"""
     db = None
 
-    def __init__(self, bot, db):
+    def __init__(self, bot, db, eos):
         self.bot = bot
         self.db = db
+        self.eos = eos
 
     @commands.command()
     async def ping(self, ctx):
@@ -31,7 +31,7 @@ class General(commands.Cog):
     async def list(self, ctx):
         """List all proposals"""
         await ctx.trigger_typing()
-        table = create_table(get_proposal())
+        table = create_table(self.eos.get_proposal())
         await ctx.send(f'```Proposals Overview\n\n{table}```')
 
     @proposals.command()
@@ -41,7 +41,7 @@ class General(commands.Cog):
             await ctx.send("id cannot be smaller than 1.", delete_after=3.0)
         else:
             await ctx.trigger_typing()
-            proposal = get_proposal(id=id)[0]
+            proposal = self.eos.get_proposal(id=id)[0]
 
             data = {
                 "title": "**#{0}** {1}".format(proposal['id'], proposal['title']),
@@ -69,14 +69,14 @@ class General(commands.Cog):
         if not account_name:
             return await ctx.send('No EOS account linked to {}'.format(ctx.author.display_name))
 
-        signed = signed_constitution(account_name)
+        signed = self.eos.signed_constitution(account_name)
         if not signed:
             return await ctx.send('{} did not sign the constitution!'.format(account_name))
         
-        efx_staked, nfx_staked, last_claim_age, last_claim_time = get_staking_details(account_name)
-        stake_age = calculate_stake_age(last_claim_age, last_claim_time)  
-        efx_power = calculate_efx_power(efx_staked, stake_age)
-        vote_power = calculate_vote_power(efx_power, nfx_staked)
+        efx_staked, nfx_staked, last_claim_age, last_claim_time = self.eos.get_staking_details(account_name)
+        stake_age = self.eos.calculate_stake_age(last_claim_age, last_claim_time)  
+        efx_power = self.eos.calculate_efx_power(efx_staked, stake_age)
+        vote_power = self.eos.calculate_vote_power(efx_power, nfx_staked)
 
         data = {
             "title": "Account details",
@@ -99,7 +99,7 @@ class General(commands.Cog):
         if not account_name:
             return await ctx.send('No EOS account linked to this user')
 
-        user = update_account(self.db, ctx.author.id, account_name)
+        user = self.eos.update_account(self.db, ctx.author.id, account_name)
         if not user:
             return await ctx.send('Could not update your account')
 
@@ -116,8 +116,8 @@ class General(commands.Cog):
     @commands.command()
     async def cycle(self, ctx):
         """Show cycle stats, how long till the next cycle. etc."""
-        config = get_config()
-        cycle = get_cycle(config['current_cycle'])[0]
+        config = self.eos.get_config()
+        cycle = self.eos.get_cycle(config['current_cycle'])[0]
         
         now = arrow.utcnow()
         started_at = arrow.get(cycle['start_time'])
@@ -149,7 +149,8 @@ class General(commands.Cog):
             
     @commands.Cog.listener()
     async def on_ready(self):
-
+        self.eos.get_all_proposals()
+        
         logger.info('Logged in as {0}!'.format(self.bot.user))
         await self.bot.change_presence(activity=Activity(type=ActivityType.watching, name='EFX go to the moon!'))
         

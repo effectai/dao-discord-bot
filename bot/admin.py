@@ -12,9 +12,10 @@ class Admin(commands.Cog):
     """Admin functionality"""
     db = None
 
-    def __init__(self, bot, db):
+    def __init__(self, bot, db, eos):
         self.bot = bot
         self.db = db
+        self.eos = eos
 
     @staticmethod
     def _sender_is_effect_member(ctx):

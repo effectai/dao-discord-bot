@@ -1,3 +1,4 @@
+from modules.eos import EOS
 from bot.reminder import Reminder
 from bot.custom_help import CustomHelp
 import logging
@@ -23,11 +24,12 @@ if __name__ == '__main__':
     db = TinyDB('/var/tinydb/db.json')
     # db = TinyDB('db.json')
 
+    eos = EOS()
     # Add Cogs here
-    bot.add_cog(DM(bot, db))
-    bot.add_cog(Reminder(bot, db))
-    bot.add_cog(General(bot, db))
-    bot.add_cog(Admin(bot, db))
+    bot.add_cog(DM(bot, db, eos))
+    bot.add_cog(Reminder(bot, db, eos))
+    bot.add_cog(General(bot, db, eos))
+    bot.add_cog(Admin(bot, db, eos))
 
     # Start bot
     bot.run(os.environ['DISCORD_BOT_TOKEN'])

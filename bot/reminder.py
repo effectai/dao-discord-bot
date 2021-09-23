@@ -1,6 +1,5 @@
 
 import arrow
-from modules.eos import get_config, get_cycle, get_proposal
 from apscheduler.events import EVENT_JOB_ERROR
 from bot.admin import Admin
 import logging
@@ -14,17 +13,18 @@ logger = logging.getLogger(__name__)
 class Reminder(commands.Cog):
     """Reminder messages"""
 
-    def __init__(self, bot, db):
+    def __init__(self, bot, db, eos):
         self.bot = bot
         self.db = db
+        self.eos = eos
         self.scheduler = AsyncIOScheduler()
         self.latest_proposal_id = None
         self.latest_cycle_id = None
 
     async def notify_vote_duration(self):        
         now = arrow.utcnow()
-        config = get_config()
-        cycle = get_cycle(config['current_cycle'])
+        config = self.eos.get_config()
+        cycle = self.eos.get_cycle(config['current_cycle'])
         started_at = arrow.get(cycle['start_time'])
 
         vote_duration = arrow.get(started_at.timestamp() + config['cycle_voting_duration_sec'])
@@ -41,7 +41,7 @@ class Reminder(commands.Cog):
         logger.info('Latest proposal id known: {0}. Checking for new proposals...'.format(self.latest_proposal_id))
 
         while True:
-            proposal = get_proposal(id=self.latest_proposal_id + 1)
+            proposal = self.eos.get_proposal(id=self.latest_proposal_id + 1)
             if proposal: 
                 # NOTIFY
                 for channel_id in CHANNEL_IDS:
@@ -57,9 +57,8 @@ class Reminder(commands.Cog):
         logger.info('Latest cycle id known: {0}. Checking for a new cycle...'.format(self.latest_cycle_id))
 
         while True:
-            config = get_config()
-            print(int(config['current_cycle']) + 1, )
-            cycle = get_cycle(self.latest_cycle_id + 1)
+            config = self.eos.get_config()
+            cycle = self.eos.get_cycle(self.latest_cycle_id + 1)
             if cycle: 
                 # NOTIFY
                 for channel_id in CHANNEL_IDS:
@@ -139,11 +138,11 @@ class Reminder(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
 
-        config = get_config()
-        cycle = get_cycle(config['current_cycle'])
+        config = self.eos.get_config()
+        cycle = self.eos.get_cycle(config['current_cycle'])
         
         self.latest_cycle_id = int(cycle[0]['id'])
-        self.latest_proposal_id = int(get_proposal(ipfs=False, limit=1)[0]['id'])
+        self.latest_proposal_id = int(self.eos.get_proposal(ipfs=False, limit=1)[0]['id'])
         
         started_at = arrow.get(cycle[0]['start_time'])
         vote_duration = arrow.get(started_at.timestamp() + config['cycle_voting_duration_sec'])
