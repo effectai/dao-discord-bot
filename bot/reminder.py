@@ -41,7 +41,7 @@ class Reminder(commands.Cog):
         logger.info('Latest proposal id known: {0}. Checking for new proposals...'.format(self.latest_proposal_id))
 
         while True:
-            proposal = self.eos.get_proposal(id=self.latest_proposal_id + 1)
+            proposal = self.eos.get_proposal(id=self.latest_proposal_id + 1, ipfs=False)
             if proposal: 
                 # NOTIFY
                 for channel_id in CHANNEL_IDS:
@@ -142,7 +142,7 @@ class Reminder(commands.Cog):
         cycle = self.eos.get_cycle(config['current_cycle'])
         
         self.latest_cycle_id = int(cycle[0]['id'])
-        self.latest_proposal_id = int(self.eos.get_proposal(ipfs=False, limit=1)[0]['id'])
+        self.latest_proposal_id = int(self.eos.get_latest_proposal()['id'])
         
         started_at = arrow.get(cycle[0]['start_time'])
         vote_duration = arrow.get(started_at.timestamp() + config['cycle_voting_duration_sec'])
