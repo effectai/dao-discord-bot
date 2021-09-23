@@ -64,7 +64,7 @@ class General(commands.Cog):
             await ctx.send(embed=embed)
 
     @commands.group(invoke_without_command=True)
-    async def dao(self):
+    async def dao(self, ctx, *args):
         """General DAO functionalities. Such as showing account details."""
 
     @dao.command()
