@@ -89,7 +89,7 @@ def verify_transaction(db, transaction):
 
     return None, 'I could not verify your transaction, make sure to include the correct memo'
 
-def get_proposal(id=None):
+def get_proposal(id=None, ipfs=True, limit=10):
     data = None
     config = {
         'code': "daoproposals",
@@ -103,7 +103,7 @@ def get_proposal(id=None):
     }
     
     if id is None:
-        config.update({'limit': 10, 'lower_bound': "", "reverse": True})
+        config.update({'limit': limit, 'lower_bound': "", "reverse": True})
     else:
         config.update({'limit': 1, 'lower_bound': str(id)})
 
@@ -112,13 +112,14 @@ def get_proposal(id=None):
     if data:
         for row in data['rows']:
             # format data before returning.
-            content = ipfs_request(row['content_hash'])
-            row['url'] = 'https://dao.effect.network/proposals/{0}'.format(row['id'])
-            proposal_link = ' [read more]({0})'.format(row['url'])
-            row['proposal_costs'] = row['pay'][0]['field_0']['quantity']
-            row['title'] = content['title']
-            row['description'] = textwrap.shorten(content['body'], width= 250, placeholder=proposal_link)
-            row['category'] = category[row['category']]
+            if ipfs:        
+                content = ipfs_request(row['content_hash'])
+                row['url'] = 'https://dao.effect.network/proposals/{0}'.format(row['id'])
+                proposal_link = ' [read more]({0})'.format(row['url'])
+                row['proposal_costs'] = row['pay'][0]['field_0']['quantity']
+                row['title'] = content['title']
+                row['description'] = textwrap.shorten(content['body'], width= 250, placeholder=proposal_link)
+                row['category'] = category[row['category']]
 
         return data['rows']
 
@@ -211,7 +212,8 @@ def get_cycle(id=None):
         })
     
     cycle = cycle_data['rows'] if cycle_data else None
-    return cycle[0]
+
+    return cycle
 
 
 def update_account(db, discord_id, account_name):

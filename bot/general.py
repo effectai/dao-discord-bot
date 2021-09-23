@@ -117,7 +117,7 @@ class General(commands.Cog):
     async def cycle(self, ctx):
         """Show cycle stats, how long till the next cycle. etc."""
         config = get_config()
-        cycle = get_cycle(config['current_cycle'])
+        cycle = get_cycle(config['current_cycle'])[0]
         
         now = arrow.utcnow()
         started_at = arrow.get(cycle['start_time'])
