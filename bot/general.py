@@ -31,7 +31,11 @@ class General(commands.Cog):
     async def list(self, ctx):
         """List all proposals"""
         await ctx.trigger_typing()
-        table = create_table(self.eos.get_proposal())
+        proposals = self.eos.get_proposal(limit=30)
+        # only let active and pending proposals through.
+        filtered_proposals = [x for x in proposals if x['status'] == 'ACTIVE' or x['status'] == 'PENDING']
+
+        table = create_table(filtered_proposals)
         await ctx.send(f'```Proposals Overview\n\n{table}```')
 
     @proposals.command()
@@ -48,10 +52,12 @@ class General(commands.Cog):
                 "description": proposal['description'],
                 "url": proposal['url'],
                 "body": {
-                    "proposal costs": proposal['proposal_costs'].replace('EFX', '**EFX**'),
+                    "Proposal id": proposal['id'],
+                    "Status": proposal['status'],
                     "category": proposal['category'],
                     "author": proposal['author'],
-                    "cycle": proposal['cycle']
+                    "cycle": proposal['cycle'],
+                    "proposal costs": proposal['proposal_costs'].replace('EFX', '**EFX**'),
                 }
             }
 
@@ -149,7 +155,6 @@ class General(commands.Cog):
             
     @commands.Cog.listener()
     async def on_ready(self):
-        self.eos.get_all_proposals()
         
         logger.info('Logged in as {0}!'.format(self.bot.user))
         await self.bot.change_presence(activity=Activity(type=ActivityType.watching, name='EFX go to the moon!'))
