@@ -1,8 +1,12 @@
 import logging
+
+import discord
+from settings.defaults import CATEGORY_IDS, ROLE_IDS
 from discord.activity import Activity, ActivityType
 from discord.ext import commands
 from tinydb import where
 import arrow
+from bot.admin import Admin
 
 from modules.utils import create_embed, create_table, get_account_name_from_context
 
@@ -27,6 +31,52 @@ class General(commands.Cog):
     async def proposals(self, ctx, *args):
         """Get proposals on the Effect DAO"""
         
+    @proposals.command()
+    async def create_channel(self, ctx, id):
+        """Create important proposal channels"""
+        if not Admin._sender_is_effect_member(ctx):
+            return
+    
+        if int(id) <= 0:
+            return await ctx.send("id cannot be smaller than 1.", delete_after=3.0)
+        else:
+            proposal = self.eos.get_proposal(id=id)[0]
+            title = "#{0} {1}".format(proposal['id'], proposal['title'])
+
+            data = {
+                "title": title,
+                "description": proposal['description'],
+                "url": proposal['url'],
+                "body": {
+                    "Proposal id": proposal['id'],
+                    "Status": proposal['status'],
+                    "category": proposal['category'],
+                    "author": proposal['author'],
+                    "cycle": proposal['cycle'],
+                    "proposal costs": proposal['proposal_costs'].replace('EFX', '**EFX**'),
+                }
+            }
+            # reformat title so that it matches channel title.
+            channel = discord.utils.get(ctx.guild.text_channels, name=title.replace(' ', '-').replace('#', '').lower())
+            print(channel)
+            if not channel:
+                dao_member_role = discord.utils.get(ctx.guild.roles, id=ROLE_IDS['DISCORD_DAO_MEMBER_ID'])
+                bot_role = discord.utils.get(ctx.guild.roles, id=ROLE_IDS['BOT_ID'])
+
+                category = discord.utils.get(ctx.guild.categories, id=CATEGORY_IDS['DAO_PROPOSALS'])
+                
+                await category.set_permissions(dao_member_role, view_channel=True)
+                await category.set_permissions(bot_role, view_channel=True)
+                await category.set_permissions(ctx.guild.default_role, view_channel=False)
+
+                channel = await ctx.guild.create_text_channel(title, category=category, sync_permissions=True)
+                
+                embed = create_embed(self, data)
+                await channel.send(embed=embed)
+            else:
+                await ctx.trigger_typing()
+                return await ctx.send('Channel already exists.')
+
     @proposals.command()
     async def list(self, ctx):
         """List all proposals"""

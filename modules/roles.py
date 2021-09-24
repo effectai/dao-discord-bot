@@ -31,7 +31,7 @@ def sync_roles(discord_id):
 
 
     # Set applicable roles
-    applicable_roles = [settings.DISCORD_DAO_MEMBER_ID]
+    applicable_roles = [settings.ROLE_IDS['DISCORD_DAO_MEMBER_ID']]
 
     for role in applicable_roles:
         set_role(discord_id, role)

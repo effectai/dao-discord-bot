@@ -20,7 +20,7 @@ class Admin(commands.Cog):
     @staticmethod
     def _sender_is_effect_member(ctx):
         for role in ctx.author.roles:
-            if str(role.id) == settings.DISCORD_EFFECT_TEAM_ROLE_ID:
+            if role.id == settings.ROLE_IDS['DISCORD_EFFECT_TEAM_ROLE_ID']:
                 return True
 
         return False
