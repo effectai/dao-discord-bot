@@ -153,7 +153,7 @@ class Reminder(commands.Cog):
         self.scheduler.start()
 
         # DAO call notification on discord.
-        self.scheduler.add_job(self.notify_dao_call, trigger='cron', day_of_week='wed', hour=17, minute=0, id="dao_call_notify")
+        self.scheduler.add_job(self.notify_dao_call, trigger='cron', day_of_week='wed', hour=15, minute=0, id="dao_call_notify")
         self.scheduler.add_job(self.notify_vote_duration, 'date', run_date=vote_duration.datetime, id="dao_vote_notify")
         self.scheduler.add_job(self.check_new_cycle, trigger='interval', hours=1, id="dao_new_cycle_notify")
         self.scheduler.add_job(self.check_new_proposals, trigger='interval', hours=1, id="dao_new_proposals_notify")
