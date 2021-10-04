@@ -5,7 +5,6 @@ from discord.ext import commands
 
 import settings
 from modules import verification
-from modules.eos import get_transaction, verify_transaction
 from modules.roles import sync_roles
 
 logger = logging.getLogger(__name__)
@@ -15,9 +14,10 @@ class DM(commands.Cog):
     """Functionality that is only active in DM (Direct Message)"""
     db = None
 
-    def __init__(self, bot, db):
+    def __init__(self, bot, db, eos):
         self.bot = bot
         self.db = db
+        self.eos = eos
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -46,11 +46,11 @@ class DM(commands.Cog):
                 if not len(tx_hash) == 64:
                     return await message.channel.send('That does not seem to be a valid transaction, example of valid transaction: `https://bloks.io/transaction/484d7b15ac63367fb29258059584a739409f1f7ed1829e05c53050db6485c6f9`')
 
-                transaction = get_transaction(tx_hash)
+                transaction = self.eos.get_transaction(tx_hash)
                 if not transaction:
                     return await message.channel.send('I could not verify your transaction, if you just made the transaction it can take a minute before I can see it. Try again later.')
 
-                updated_user, response = verify_transaction(self.db, transaction)
+                updated_user, response = self.eos.verify_transaction(self.db, transaction)
                 if not updated_user:
                     return await message.channel.send(response)
 

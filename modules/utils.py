@@ -37,10 +37,10 @@ def create_table(data):
     # TODO: Need to get actual title from IPFS but think about caching proposals so that you dont have to hit the blockchain everytime.
     table = PrettyTable(border=True, header=True)
     table.set_style(DOUBLE_BORDER)
-    table.field_names = ["Id", "Proposal title", "Author", "Cycle", "Category", "Costs"]
+    table.field_names = ["Id", "Proposal title", "Author", "Cycle", "Status", "Costs"]
     for row in data:
         # print(row, '\n')
-        table.add_row([row['id'], textwrap.shorten(row['title'], width=53, placeholder="..."), row['author'], row['cycle'], row['category'], row['proposal_costs']])
+        table.add_row([row['id'], textwrap.shorten(row['title'], width=53, placeholder="..."), row['author'], row['cycle'], row['status'], row['proposal_costs']])
     
     table.align["Costs"] = "r"
     return table

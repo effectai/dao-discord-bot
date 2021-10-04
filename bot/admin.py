@@ -12,14 +12,15 @@ class Admin(commands.Cog):
     """Admin functionality"""
     db = None
 
-    def __init__(self, bot, db):
+    def __init__(self, bot, db, eos):
         self.bot = bot
         self.db = db
+        self.eos = eos
 
     @staticmethod
     def _sender_is_effect_member(ctx):
         for role in ctx.author.roles:
-            if str(role.id) == settings.DISCORD_EFFECT_TEAM_ROLE_ID:
+            if role.id == settings.ROLE_IDS['DISCORD_EFFECT_TEAM_ROLE_ID']:
                 return True
 
         return False
