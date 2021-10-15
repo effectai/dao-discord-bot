@@ -15,11 +15,11 @@ class EOS():
         self.next_key = None
         self.more_proposals = None
         self.proposals = None
-    
+
     def ipfs_request(self, hash):
         req = requests.get(f'https://ipfs.effect.ai/ipfs/{hash}')
         
-        logger.info('[IPFS] {}'.format(req.request.url))
+        # logger.info('[IPFS] {}'.format(req.request.url))
         if req.status_code == 200:
             return req.json()
 
@@ -31,7 +31,7 @@ class EOS():
             **kwargs
         )
 
-        logger.info('[EOS] {}'.format(req.request.url))
+        # logger.info('[EOS] {}'.format(req.request.url))
         if req.status_code == 200:
             return req.json()
 
@@ -105,6 +105,9 @@ class EOS():
         if 'rows' in data: return data['rows'][0]
         else: return None
 
+    def clear_proposal(self):
+        self.proposals = None
+
     def get_proposal(self, id=None, limit=20, ipfs=True):
 
         config = {
@@ -135,9 +138,9 @@ class EOS():
 
         
         if self.next_key: config['lower_bound'] = self.next_key 
-        
+                
         data = self.node_request('get_table_rows', json=config)
-        
+
         self.more_proposals = data['more']
         self.next_key = data['next_key']
 
@@ -187,7 +190,7 @@ class EOS():
         proposal['proposal_costs'] = proposal['pay'][0]['field_0']['quantity']
         proposal['title'] = content['title']
         proposal['description'] = textwrap.shorten(content['body'], width= 250, placeholder=proposal_link)
-        proposal['category'] = category[proposal['category']]
+        proposal['category_name'] = category[proposal['category']]
         
         return proposal
 

@@ -50,7 +50,7 @@ class General(commands.Cog):
                 "body": {
                     "Proposal id": proposal['id'],
                     "Status": proposal['status'],
-                    "category": proposal['category'],
+                    "category": proposal['category_name'],
                     "author": proposal['author'],
                     "cycle": proposal['cycle'],
                     "proposal costs": proposal['proposal_costs'].replace('EFX', '**EFX**'),
@@ -82,6 +82,7 @@ class General(commands.Cog):
         """List all proposals"""
         await ctx.trigger_typing()
         proposals = self.eos.get_proposal(limit=30)
+        self.eos.clear_proposal()
         # only let active and pending proposals through.
         filtered_proposals = [x for x in proposals if x['status'] == 'ACTIVE' or x['status'] == 'PENDING']
 
@@ -96,7 +97,7 @@ class General(commands.Cog):
         else:
             await ctx.trigger_typing()
             proposal = self.eos.get_proposal(id=id)[0]
-
+            self.eos.clear_proposal()
             data = {
                 "title": "**#{0}** {1}".format(proposal['id'], proposal['title']),
                 "description": proposal['description'],
@@ -104,7 +105,7 @@ class General(commands.Cog):
                 "body": {
                     "Proposal id": proposal['id'],
                     "Status": proposal['status'],
-                    "category": proposal['category'],
+                    "category": proposal['category_name'],
                     "author": proposal['author'],
                     "cycle": proposal['cycle'],
                     "proposal costs": proposal['proposal_costs'].replace('EFX', '**EFX**'),
