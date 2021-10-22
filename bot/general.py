@@ -41,6 +41,7 @@ class General(commands.Cog):
             return await ctx.send("id cannot be smaller than 1.", delete_after=3.0)
         else:
             proposal = self.eos.get_proposal(id=id)[0]
+            self.eos.clear_proposal()
             title = "#{0} {1}".format(proposal['id'], proposal['title'])
 
             data = {
@@ -58,7 +59,6 @@ class General(commands.Cog):
             }
             # reformat title so that it matches channel title.
             channel = discord.utils.get(ctx.guild.text_channels, name=title.replace(' ', '-').replace('#', '').lower())
-            print(channel)
             if not channel:
                 dao_member_role = discord.utils.get(ctx.guild.roles, id=ROLE_IDS['DISCORD_DAO_MEMBER_ID'])
                 bot_role = discord.utils.get(ctx.guild.roles, id=ROLE_IDS['BOT_ID'])
