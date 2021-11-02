@@ -1,11 +1,16 @@
 import logging
 import textwrap
 import time
-from datetime import datetime
-
+from datetime import datetime, timedelta
+import eospy.cleos
+import os
+import eospy.keys
+from eospy.types import Abi, Action
+from eospy.utils import parse_key_file
 import arrow
 from settings.defaults import category
 import requests
+import pytz
 from tinydb import Query
 
 logger = logging.getLogger(__name__)
@@ -15,6 +20,7 @@ class EOS():
         self.next_key = None
         self.more_proposals = None
         self.proposals = None
+        self.ce = eospy.cleos.Cleos(url='https://api.kylin.alohaeos.com:443')
 
     def ipfs_request(self, hash):
         req = requests.get(f'https://ipfs.effect.ai/ipfs/{hash}')
@@ -50,6 +56,44 @@ class EOS():
 
         return None
 
+    def search_account (self, acc_name):
+        """Check if account exists."""
+        try:
+            self.ce.get_account(acc_name)
+        except requests.exceptions.HTTPError:
+            return False    
+        
+        return True
+
+    def transferTo(self, to_acc, amount=100.0000, memo="Happy Hackathon"):
+        """Transfers x amounts of UTL to the sender."""
+
+        arguments = {
+            "from": "efxfaucetbot",
+            "to": to_acc,
+            "quantity": f"{amount:.4f} UTL",
+            "memo": memo,
+        }
+        payload = {
+            "account": "tokenonkylin",
+            "name": "transfer",
+            "authorization": [{
+                "actor": "efxfaucetbot",
+                "permission": "active",
+            }],
+        }
+        # Converting payload to binary
+        data = self.ce.abi_json_to_bin(payload['account'], payload['name'], arguments)
+        # Inserting payload binary form as "data" field in original payload
+        payload['data'] = data['binargs']
+        # final transaction formed
+        trx = {"actions": [payload]}
+        trx['expiration'] = str(
+            (datetime.utcnow() + timedelta(seconds=60)).replace(tzinfo=pytz.UTC))
+
+        key = eospy.keys.EOSKey(os.environ['DISCORD_BOT_PK'])
+
+        return self.ce.push_transaction(trx, key, broadcast=True)
 
     def verify_transaction(self, db, transaction):
         """

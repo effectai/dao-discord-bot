@@ -12,3 +12,4 @@ discord.py==1.7.3
 prettytable==2.2.0
 requests==2.26.0
 tinydb==4.3.0
+libeospy==2.1.0

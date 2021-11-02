@@ -27,6 +27,37 @@ class General(commands.Cog):
     async def ping(self, ctx):
         """Pong"""
         await ctx.send(':ping_pong: Pong!')
+    
+    @commands.command()
+    @commands.dm_only()
+    @commands.cooldown(1, 86400, commands.BucketType.user)
+    async def get_tokens(self, ctx, to_eos_account):
+        """Getting tokens from the faucet."""
+        if self.eos.search_account(to_eos_account) is True:
+            await ctx.trigger_typing()
+            res = self.eos.transferTo(to_eos_account)
+            data = {
+                "title": f"Sent tokens to {to_eos_account}",
+                "url": "https://kylin.bloks.io/transaction/{0}".format(res['transaction_id']),
+                "footer_text": "Effect Hackathon",
+                "body": {
+                    "transaction id": res['transaction_id'],
+                    "status": res['processed']['receipt']['status'],
+                    "memo": res['processed']['action_traces'][0]['act']['data']['memo'],
+                    "amount": res['processed']['action_traces'][0]['act']['data']['quantity'].replace('UTL', '**EFX**'),
+                }
+            }
+            embed = create_embed(self, data, inline=False)
+            return await ctx.send(embed=embed)
+        else:
+            ctx.command.reset_cooldown(ctx) 
+            return await ctx.send(f"{to_eos_account} does not exist. Please try again.")
+        
+    @get_tokens.error
+    async def on_get_tokens_error(self, ctx, error):
+        if isinstance(error, (commands.PrivateMessageOnly, commands.CommandOnCooldown, commands.MissingRequiredArgument, commands.CommandInvokeError)):
+            return await ctx.send(error)
+
     @commands.group(invoke_without_command=True)
     async def proposals(self, ctx, *args):
         """Get proposals on the Effect DAO"""
@@ -48,6 +79,7 @@ class General(commands.Cog):
                 "title": title,
                 "description": proposal['description'],
                 "url": proposal['url'],
+                "footer_text": "Effect DAO",
                 "body": {
                     "Proposal id": proposal['id'],
                     "Status": proposal['status'],
@@ -102,6 +134,7 @@ class General(commands.Cog):
                 "title": "**#{0}** {1}".format(proposal['id'], proposal['title']),
                 "description": proposal['description'],
                 "url": proposal['url'],
+                "footer_text": "Effect DAO",
                 "body": {
                     "Proposal id": proposal['id'],
                     "Status": proposal['status'],
@@ -138,6 +171,7 @@ class General(commands.Cog):
         data = {
             "title": "Account details",
             "url": "https://dao.effect.network/account/{}".format(account_name),
+            "footer_text": "Effect DAO",
             "body": {
                 "DAO Account": account_name,
                 "EFX staked": efx_staked,
@@ -192,6 +226,7 @@ class General(commands.Cog):
         data = {
             "title": "Cycle details",
             "url": "https://dao.effect.network/proposals",
+            "footer_text": "Effect DAO",
             "body": {
                 "Current cycle": config['current_cycle'],
                 "Cycle start time": "{0}\n(**{1}**)".format(started_at_dt, started_at_str),
