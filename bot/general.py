@@ -51,7 +51,7 @@ class General(commands.Cog):
             return await ctx.send(embed=embed)
         else:
             ctx.command.reset_cooldown(ctx) 
-            return await ctx.send(f"{to_eos_account} does not exist. Please try again.")
+            return await ctx.send(f"{to_eos_account} does not exist.")
         
     @get_tokens.error
     async def on_get_tokens_error(self, ctx, error):
