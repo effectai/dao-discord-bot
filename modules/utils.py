@@ -55,7 +55,7 @@ def create_embed(self, data, inline=True):
     if 'description' in data:
         embed.description = data['description']
 
-    embed.set_footer(icon_url=self.bot.user.avatar_url, text="Effect DAO")
+    embed.set_footer(icon_url=self.bot.user.avatar_url, text=data['footer_text'])
 
     for entry in data['body']:
         embed.add_field(name=entry, value=data['body'][entry], inline=inline)
