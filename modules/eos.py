@@ -84,10 +84,12 @@ class EOS():
         except requests.exceptions.HTTPError as error:
             return error, False    
         
+
     def transferTo(self, to_acc, amount=100.0000, memo="Happy Hackathon"):
         """Transfers x amounts of UTL to the sender."""
 
         arguments = {
+
             "from_id": 177, # vaccount id of efxfaucetbot
             "to_id": int(to_acc),
             "quantity": {

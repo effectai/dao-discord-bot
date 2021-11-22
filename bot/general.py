@@ -27,6 +27,7 @@ class General(commands.Cog):
     async def ping(self, ctx):
         """Pong"""
         await ctx.send(':ping_pong: Pong!')
+
     @commands.command()
     @commands.dm_only()
     @commands.cooldown(1, 86400, commands.BucketType.user)
@@ -38,6 +39,7 @@ class General(commands.Cog):
             await ctx.trigger_typing()
             res = self.eos.transferTo(account['id'])
             print(res)
+
             data = {
                 "title": f"Sent tokens to {to_eos_account}",
                 "url": "https://kylin.bloks.io/transaction/{0}".format(res['transaction_id']),
@@ -51,6 +53,7 @@ class General(commands.Cog):
             }
             embed = create_embed(self, data, inline=False)
             return await ctx.send(embed=embed)            
+
         else:
             ctx.command.reset_cooldown(ctx) 
             return await ctx.send(f"{to_eos_account} does not exist.")
