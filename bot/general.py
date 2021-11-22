@@ -27,15 +27,17 @@ class General(commands.Cog):
     async def ping(self, ctx):
         """Pong"""
         await ctx.send(':ping_pong: Pong!')
-    
     @commands.command()
     @commands.dm_only()
     @commands.cooldown(1, 86400, commands.BucketType.user)
     async def get_tokens(self, ctx, to_eos_account):
         """Getting tokens from the faucet."""
-        if self.eos.search_account(to_eos_account) is True:
+        account, founded = self.eos.search_account(to_eos_account)
+
+        if (founded is True):
             await ctx.trigger_typing()
-            res = self.eos.transferTo(to_eos_account)
+            res = self.eos.transferTo(account['id'])
+            print(res)
             data = {
                 "title": f"Sent tokens to {to_eos_account}",
                 "url": "https://kylin.bloks.io/transaction/{0}".format(res['transaction_id']),
@@ -44,11 +46,11 @@ class General(commands.Cog):
                     "transaction id": res['transaction_id'],
                     "status": res['processed']['receipt']['status'],
                     "memo": res['processed']['action_traces'][0]['act']['data']['memo'],
-                    "amount": res['processed']['action_traces'][0]['act']['data']['quantity'].replace('UTL', '**EFX**'),
+                    "amount": res['processed']['action_traces'][0]['act']['data']['quantity']['quantity'].replace('UTL', '**EFX**'),
                 }
             }
             embed = create_embed(self, data, inline=False)
-            return await ctx.send(embed=embed)
+            return await ctx.send(embed=embed)            
         else:
             ctx.command.reset_cooldown(ctx) 
             return await ctx.send(f"{to_eos_account} does not exist.")
