@@ -30,13 +30,13 @@ class General(commands.Cog):
 
     @commands.command()
     @commands.cooldown(1, 86400, commands.BucketType.user)
-    async def get_tokens(self, ctx, owner):
-        """Getting tokens from the faucet."""
+    async def get_tokens(self, ctx, account):
+        """Sending tokens from the faucet to account, which can be an Vaccount name or Vaccount address."""
         if Admin._sender_is_effect_member(ctx):
             ctx.command.reset_cooldown(ctx)
-            
+
         if ctx.channel.id == CHANNEL_IDS['DISCORD_FAUCET_CHANNEL']:
-            account, founded = self.eos.search_account(owner)
+            account, founded = self.eos.search_account(account)
 
             if (founded is True):
                 await ctx.trigger_typing()
@@ -44,7 +44,7 @@ class General(commands.Cog):
                 res = self.eos.transferTo(account['id'])
 
                 data = {
-                    "title": f"Sent tokens to {owner}",
+                    "title": "Sent tokens to {}".format(account['address'][1]),
                     "url": "https://kylin.bloks.io/transaction/{0}".format(res['transaction_id']),
                     "footer_text": "Effect Hackathon",
                     "body": {
@@ -59,7 +59,7 @@ class General(commands.Cog):
                 # return await ctx.send('job good.')
             else:
                 ctx.command.reset_cooldown(ctx) 
-                return await ctx.send(f"{owner} does not exist.")
+                return await ctx.send(f"{account} does not exist.")
         else:
             ctx.command.reset_cooldown(ctx)
             return await ctx.send("Cannot use this command in this channel.")
