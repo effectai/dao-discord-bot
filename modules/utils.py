@@ -1,9 +1,13 @@
+from array import array
 from datetime import datetime
 from discord import Embed, Color
+from eospy.types import convert_little_endian
+from eospy.utils import int_to_hex, string_to_name
 from prettytable.prettytable import DOUBLE_BORDER
 from tinydb import Query
 from prettytable import PrettyTable
 import textwrap
+from binascii import hexlify
 
 
 def cool_number(num):
@@ -61,3 +65,8 @@ def create_embed(self, data, inline=True):
         embed.add_field(name=entry, value=data['body'][entry], inline=inline)
 
     return embed
+
+def is_BSC_address(address):
+    return (len(address) == 42 or len(address) == 40)
+def name_to_hex(name):
+    return hexlify(convert_little_endian(string_to_name(name), 'Q')).decode()
