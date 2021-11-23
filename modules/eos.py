@@ -79,8 +79,9 @@ class EOS():
             'json': True,
             }
             data = self.node_request('get_table_rows', url='https://jungle3.greymass.com:443/v1/chain/{}', json=config)
-            if data['rows']:
-                return data['rows'][0], True
+            for row in data['rows']:
+                if row['balance']['quantity'].endswith('EFX'):
+                    return row, True
         except requests.exceptions.HTTPError as error:
             return error, False    
         
