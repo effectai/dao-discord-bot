@@ -32,10 +32,9 @@ class Reminder(commands.Cog):
         vote_duration_dt = vote_duration.format("D MMMM YYYY HH:mm:ss ZZZ")
 
 
-        for channel_id in CHANNEL_IDS:
-            channel = self.bot.get_channel(CHANNEL_IDS[channel_id])
+        channel = self.bot.get_channel(CHANNEL_IDS['DISCORD_DAO_SPAM_CHANNEL'])
 
-            await channel.send(f"The current vote duration is almost over! **VOTE** while you still can on https://dao.effect.network/proposals\nThe vote duration ends at {vote_duration_dt} (**{vote_duration_str}**)")
+        await channel.send(f"The current vote duration is almost over! **VOTE** while you still can on https://dao.effect.network/proposals\nThe vote duration ends at {vote_duration_dt} (**{vote_duration_str}**)")
 
     async def check_new_proposals(self):
         logger.info('Latest proposal id known: {0}. Checking for new proposals...'.format(self.latest_proposal_id))
@@ -44,9 +43,8 @@ class Reminder(commands.Cog):
             proposal = self.eos.get_proposal(id=self.latest_proposal_id + 1, ipfs=False)
             if proposal: 
                 # NOTIFY
-                for channel_id in CHANNEL_IDS:
-                    channel = self.bot.get_channel(CHANNEL_IDS[channel_id])
-                    await channel.send("A new proposal has been **made**! Click here https://dao.effect.network/proposals/{0} to see the new proposal.".format(proposal[0]['id']))
+                channel = self.bot.get_channel(CHANNEL_IDS['DISCORD_DAO_SPAM_CHANNEL'])
+                await channel.send("A new proposal has been **made**! Click here https://dao.effect.network/proposals/{0} to see the new proposal.".format(proposal[0]['id']))
                 self.latest_proposal_id += 1
                 logger.info('Found new proposal! id: {0}. Checking for new proposals...'.format(proposal[0]['id']))
             else:
@@ -61,9 +59,8 @@ class Reminder(commands.Cog):
             cycle = self.eos.get_cycle(self.latest_cycle_id + 1)
             if cycle: 
                 # NOTIFY
-                for channel_id in CHANNEL_IDS:
-                    channel = self.bot.get_channel(CHANNEL_IDS[channel_id])
-                    await channel.send("A new Cycle has **started**! Go to https://dao.effect.network/proposals to vote on proposals!")
+                channel = self.bot.get_channel(CHANNEL_IDS['DISCORD_DAO_SPAM_CHANNEL'])
+                await channel.send("A new Cycle has **started**! Go to https://dao.effect.network/proposals to vote on proposals!")
             
                 self.latest_cycle_id += 1
                 logger.info('Found new cycle! id: {0}. Checking for a new cycle...'.format(cycle['id']))
@@ -73,10 +70,8 @@ class Reminder(commands.Cog):
 
     async def notify_dao_call(self):
 
-        for channel_id in CHANNEL_IDS:
-            channel = self.bot.get_channel(CHANNEL_IDS[channel_id])
-            
-            await channel.send(f":warning:The weekly DAO CALL is starting:bangbang: Join us in the voice channel:warning:")
+        channel = self.bot.get_channel(CHANNEL_IDS['DISCORD_DAO_SPAM_CHANNEL'])
+        await channel.send(f":warning:The weekly DAO CALL is starting:bangbang: Join us in the voice channel:warning:")
 
     @commands.command(hidden=True)
     async def reschedule(self, ctx, trigger='cron | date | interval', job_id="job_id", *args):

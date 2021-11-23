@@ -1,7 +1,7 @@
 import logging
 
 import discord
-from settings.defaults import CATEGORY_IDS, ROLE_IDS
+from settings.defaults import CATEGORY_IDS, CHANNEL_IDS, ROLE_IDS
 from discord.activity import Activity, ActivityType
 from discord.ext import commands
 from tinydb import where
@@ -29,37 +29,48 @@ class General(commands.Cog):
         await ctx.send(':ping_pong: Pong!')
 
     @commands.command()
-    @commands.dm_only()
     @commands.cooldown(1, 86400, commands.BucketType.user)
     async def get_tokens(self, ctx, owner):
         """Getting tokens from the faucet."""
-        account, founded = self.eos.search_account(owner)
+        if Admin._sender_is_effect_member(ctx):
+            ctx.command.reset_cooldown(ctx)
+            
+        if ctx.channel.id == CHANNEL_IDS['DISCORD_FAUCET_CHANNEL']:
+            account, founded = self.eos.search_account(owner)
 
-        if (founded is True):
-            await ctx.trigger_typing()
-            res = self.eos.transferTo(account['id'])
+            if (founded is True):
+                await ctx.trigger_typing()
 
-            data = {
-                "title": f"Sent tokens to {owner}",
-                "url": "https://kylin.bloks.io/transaction/{0}".format(res['transaction_id']),
-                "footer_text": "Effect Hackathon",
-                "body": {
-                    "transaction id": res['transaction_id'],
-                    "status": res['processed']['receipt']['status'],
-                    "memo": res['processed']['action_traces'][0]['act']['data']['memo'],
-                    "amount": res['processed']['action_traces'][0]['act']['data']['quantity']['quantity'].replace('EFX', '**EFX**'),
+                res = self.eos.transferTo(account['id'])
+
+                data = {
+                    "title": f"Sent tokens to {owner}",
+                    "url": "https://kylin.bloks.io/transaction/{0}".format(res['transaction_id']),
+                    "footer_text": "Effect Hackathon",
+                    "body": {
+                        "transaction id": res['transaction_id'],
+                        "status": res['processed']['receipt']['status'],
+                        "memo": res['processed']['action_traces'][0]['act']['data']['memo'],
+                        "amount": res['processed']['action_traces'][0]['act']['data']['quantity']['quantity'].replace('EFX', '**EFX**'),
+                    }
                 }
-            }
-            embed = create_embed(self, data, inline=False)
-            return await ctx.send(embed=embed)            
-
+                embed = create_embed(self, data, inline=False)
+                return await ctx.send(embed=embed)            
+                # return await ctx.send('job good.')
+            else:
+                ctx.command.reset_cooldown(ctx) 
+                return await ctx.send(f"{owner} does not exist.")
         else:
-            ctx.command.reset_cooldown(ctx) 
-            return await ctx.send(f"{owner} does not exist.")
+            ctx.command.reset_cooldown(ctx)
+            return await ctx.send("Cannot use this command in this channel.")
+        
         
     @get_tokens.error
     async def on_get_tokens_error(self, ctx, error):
-        if isinstance(error, (commands.PrivateMessageOnly, commands.CommandOnCooldown, commands.MissingRequiredArgument, commands.CommandInvokeError)):
+        if isinstance(error, (commands.CommandOnCooldown)):
+            return await ctx.send(error)
+        if isinstance(error, (commands.MissingRequiredArgument, commands.CommandInvokeError)):
+            ctx.command.reset_cooldown(ctx) 
             return await ctx.send(error)
 
     @commands.group(invoke_without_command=True)
