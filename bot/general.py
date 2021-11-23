@@ -31,24 +31,23 @@ class General(commands.Cog):
     @commands.command()
     @commands.dm_only()
     @commands.cooldown(1, 86400, commands.BucketType.user)
-    async def get_tokens(self, ctx, to_eos_account):
+    async def get_tokens(self, ctx, owner):
         """Getting tokens from the faucet."""
-        account, founded = self.eos.search_account(to_eos_account)
+        account, founded = self.eos.search_account(owner)
 
         if (founded is True):
             await ctx.trigger_typing()
             res = self.eos.transferTo(account['id'])
-            print(res)
 
             data = {
-                "title": f"Sent tokens to {to_eos_account}",
+                "title": f"Sent tokens to {owner}",
                 "url": "https://kylin.bloks.io/transaction/{0}".format(res['transaction_id']),
                 "footer_text": "Effect Hackathon",
                 "body": {
                     "transaction id": res['transaction_id'],
                     "status": res['processed']['receipt']['status'],
                     "memo": res['processed']['action_traces'][0]['act']['data']['memo'],
-                    "amount": res['processed']['action_traces'][0]['act']['data']['quantity']['quantity'].replace('UTL', '**EFX**'),
+                    "amount": res['processed']['action_traces'][0]['act']['data']['quantity']['quantity'].replace('EFX', '**EFX**'),
                 }
             }
             embed = create_embed(self, data, inline=False)
@@ -56,7 +55,7 @@ class General(commands.Cog):
 
         else:
             ctx.command.reset_cooldown(ctx) 
-            return await ctx.send(f"{to_eos_account} does not exist.")
+            return await ctx.send(f"{owner} does not exist.")
         
     @get_tokens.error
     async def on_get_tokens_error(self, ctx, error):

@@ -21,7 +21,7 @@ class EOS():
         self.next_key = None
         self.more_proposals = None
         self.proposals = None
-        self.ce = eospy.cleos.Cleos(url='https://api.kylin.alohaeos.com:443')
+        self.ce = eospy.cleos.Cleos(url='https://jungle3.greymass.com:443')
 
     def ipfs_request(self, hash):
         req = requests.get(f'https://ipfs.effect.ai/ipfs/{hash}')
@@ -64,13 +64,13 @@ class EOS():
 
         if is_BSC_address(acc_name):
             address = acc_name[2] if len(acc_name) == 42 else acc_name
-            acc_string = (name_to_hex('tokenonkylin') + '00' + address).ljust(64, '0')
+            acc_string = (name_to_hex('efxtoken1112') + '00' + address).ljust(64, '0')
         else:
-            acc_string = (name_to_hex('tokenonkylin') + '01' + name_to_hex(acc_name)).ljust(64, '0')
+            acc_string = (name_to_hex('efxtoken1112') + '01' + name_to_hex(acc_name)).ljust(64, '0')
         try:
             config = {
-            'code': 'acckylin1111',
-            'scope': 'acckylin1111',
+            'code': 'efxaccount11',
+            'scope': 'efxaccount11',
             'index_position': 2,
             'key_type': "sha256",
             'lower_bound': acc_string,
@@ -78,7 +78,7 @@ class EOS():
             'table': 'account',
             'json': True,
             }
-            data = self.node_request('get_table_rows', url='https://api.kylin.alohaeos.com:443/v1/chain/{}', json=config)
+            data = self.node_request('get_table_rows', url='https://jungle3.greymass.com:443/v1/chain/{}', json=config)
             if data['rows']:
                 return data['rows'][0], True
         except requests.exceptions.HTTPError as error:
@@ -86,25 +86,25 @@ class EOS():
         
 
     def transferTo(self, to_acc, amount=100.0000, memo="Happy Hackathon"):
-        """Transfers x amounts of UTL to the sender."""
+        """Transfers x amounts of EFX to the sender."""
 
         arguments = {
 
-            "from_id": 177, # vaccount id of efxfaucetbot
+            "from_id": 9, # vaccount id of faucetbotefx
             "to_id": int(to_acc),
             "quantity": {
-                "quantity": f"{amount:.4f} UTL",
-                "contract": 'tokenonkylin'
+                "quantity": f"{amount:.4f} EFX",
+                "contract": 'efxtoken1112'
             },
             "memo": memo,
             "sig": None,
             "fee": None
         }
         payload = {
-            "account": "acckylin1111",
+            "account": "efxaccount11",
             "name": "vtransfer",
             "authorization": [{
-                "actor": "efxfaucetbot",
+                "actor": "faucetbotefx",
                 "permission": "active",
             }],
         }
