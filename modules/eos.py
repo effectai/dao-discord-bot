@@ -61,13 +61,13 @@ class EOS():
         """Check if account exists."""
         address = None
         acc_string = None
-
-        if is_BSC_address(acc_name):
-            address = acc_name[2] if len(acc_name) == 42 else acc_name
-            acc_string = (name_to_hex('efxtoken1112') + '00' + address).ljust(64, '0')
-        else:
-            acc_string = (name_to_hex('efxtoken1112') + '01' + name_to_hex(acc_name)).ljust(64, '0')
         try:
+            if is_BSC_address(acc_name):
+                address = acc_name[2] if len(acc_name) == 42 else acc_name
+                acc_string = (name_to_hex('efxtoken1112') + '00' + address).ljust(64, '0')
+            else:
+                acc_string = (name_to_hex('efxtoken1112') + '01' + name_to_hex(acc_name)).ljust(64, '0')
+            
             config = {
             'code': 'efxaccount11',
             'scope': 'efxaccount11',
@@ -78,13 +78,19 @@ class EOS():
             'table': 'account',
             'json': True,
             }
+
             data = self.node_request('get_table_rows', url='https://jungle3.greymass.com:443/v1/chain/{}', json=config)
+
+            if not data['rows']:
+                return data['rows'], False
+
             for row in data['rows']:
                 if row['balance']['quantity'].endswith('EFX'):
                     return row, True
+
         except requests.exceptions.HTTPError as error:
-            return error, False    
-        
+            return error, False
+
 
     def transferTo(self, to_acc, amount=100.0000, memo="Happy Hackathon"):
         """Transfers x amounts of EFX to the sender."""
