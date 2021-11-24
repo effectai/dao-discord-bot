@@ -1,6 +1,7 @@
 import logging
 
 import discord
+import requests
 from settings.defaults import CATEGORY_IDS, CHANNEL_IDS, ROLE_IDS
 from discord.activity import Activity, ActivityType
 from discord.ext import commands
@@ -65,11 +66,17 @@ class General(commands.Cog):
         
     @get_tokens.error
     async def on_get_tokens_error(self, ctx, error):
-        if isinstance(error, (commands.CommandOnCooldown)):
+        if isinstance(error, commands.CommandOnCooldown):
             return await ctx.send(error)
-        if isinstance(error, (commands.MissingRequiredArgument)):
+
+        if isinstance(error, commands.MissingRequiredArgument):
             ctx.command.reset_cooldown(ctx) 
             return await ctx.send(error)
+
+        if (isinstance(error, commands.CommandInvokeError) and
+            isinstance(error.original, requests.exceptions.HTTPError) and
+            'not enough balance' in error.original.args[0]):
+                return await ctx.send('The faucet is out of EFX at the moment.')
 
     @commands.group(invoke_without_command=True)
     async def proposals(self, ctx, *args):

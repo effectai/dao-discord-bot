@@ -5,8 +5,6 @@ from datetime import datetime, timedelta
 import eospy.cleos
 import os
 import eospy.keys
-from eospy.types import Abi, Action
-from eospy.utils import parse_key_file
 import arrow
 from modules.utils import is_BSC_address, name_to_hex
 from settings.defaults import category
