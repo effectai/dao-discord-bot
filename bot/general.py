@@ -1,6 +1,7 @@
 import logging
 
 import discord
+import requests
 from settings.defaults import CATEGORY_IDS, CHANNEL_IDS, ROLE_IDS
 from discord.activity import Activity, ActivityType
 from discord.ext import commands
@@ -36,16 +37,15 @@ class General(commands.Cog):
             ctx.command.reset_cooldown(ctx)
 
         if ctx.channel.id == CHANNEL_IDS['DISCORD_FAUCET_CHANNEL']:
-            account, founded = self.eos.search_account(account)
-
-            if (founded is True):
+            vaccount, account_exists = self.eos.search_account(account)
+            if account_exists is True:
                 await ctx.trigger_typing()
 
-                res = self.eos.transferTo(account['id'])
+                res = self.eos.transferTo(vaccount['id'])
 
                 data = {
-                    "title": "Sent tokens to {}".format(account['address'][1]),
-                    "url": "https://kylin.bloks.io/transaction/{0}".format(res['transaction_id']),
+                    "title": "Sent tokens to {}".format(vaccount['address'][1]),
+                    "url": "https://jungle3.bloks.io/transaction/{0}".format(res['transaction_id']),
                     "footer_text": "Effect Hackathon",
                     "body": {
                         "transaction id": res['transaction_id'],
@@ -56,10 +56,9 @@ class General(commands.Cog):
                 }
                 embed = create_embed(self, data, inline=False)
                 return await ctx.send(embed=embed)            
-                # return await ctx.send('job good.')
             else:
                 ctx.command.reset_cooldown(ctx) 
-                return await ctx.send(f"{account} does not exist.")
+                return await ctx.send(f"**{account}** does not exist. Have you registered your account on the effect account system?")
         else:
             ctx.command.reset_cooldown(ctx)
             return await ctx.send("Cannot use this command in this channel.")
@@ -67,11 +66,17 @@ class General(commands.Cog):
         
     @get_tokens.error
     async def on_get_tokens_error(self, ctx, error):
-        if isinstance(error, (commands.CommandOnCooldown)):
+        if isinstance(error, commands.CommandOnCooldown):
             return await ctx.send(error)
-        if isinstance(error, (commands.MissingRequiredArgument, commands.CommandInvokeError)):
+
+        if isinstance(error, commands.MissingRequiredArgument):
             ctx.command.reset_cooldown(ctx) 
             return await ctx.send(error)
+
+        if (isinstance(error, commands.CommandInvokeError) and
+            isinstance(error.original, requests.exceptions.HTTPError) and
+            'not enough balance' in error.original.args[0]):
+                return await ctx.send('The faucet is out of EFX at the moment.')
 
     @commands.group(invoke_without_command=True)
     async def proposals(self, ctx, *args):
