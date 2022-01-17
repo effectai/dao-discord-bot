@@ -32,7 +32,7 @@ class Reminder(commands.Cog):
         vote_duration_dt = vote_duration.format("D MMMM YYYY HH:mm:ss ZZZ")
 
 
-        channel = self.bot.get_channel(CHANNEL_IDS['DISCORD_DAO_SPAM_CHANNEL'])
+        channel = self.bot.get_channel(CHANNEL_IDS['DISCORD_DAO_CHAT_CHANNEL'])
 
         await channel.send(f"The current vote duration is almost over! **VOTE** while you still can on https://dao.effect.network/proposals\nThe vote duration ends at {vote_duration_dt} (**{vote_duration_str}**)")
 
@@ -43,7 +43,7 @@ class Reminder(commands.Cog):
             proposal = self.eos.get_proposal(id=self.latest_proposal_id + 1, ipfs=False)
             if proposal: 
                 # NOTIFY
-                channel = self.bot.get_channel(CHANNEL_IDS['DISCORD_DAO_SPAM_CHANNEL'])
+                channel = self.bot.get_channel(CHANNEL_IDS['DISCORD_DAO_CHAT_CHANNEL'])
                 await channel.send("A new proposal has been **made**! Click here https://dao.effect.network/proposals/{0} to see the new proposal.".format(proposal[0]['id']))
                 self.latest_proposal_id += 1
                 logger.info('Found new proposal! id: {0}. Checking for new proposals...'.format(proposal[0]['id']))
@@ -59,7 +59,7 @@ class Reminder(commands.Cog):
             cycle = self.eos.get_cycle(self.latest_cycle_id + 1)
             if cycle: 
                 # NOTIFY
-                channel = self.bot.get_channel(CHANNEL_IDS['DISCORD_DAO_SPAM_CHANNEL'])
+                channel = self.bot.get_channel(CHANNEL_IDS['DISCORD_DAO_CHAT_CHANNEL'])
                 await channel.send("A new Cycle has **started**! Go to https://dao.effect.network/proposals to vote on proposals!")
             
                 self.latest_cycle_id += 1
@@ -70,7 +70,7 @@ class Reminder(commands.Cog):
 
     async def notify_dao_call(self):
 
-        channel = self.bot.get_channel(CHANNEL_IDS['DISCORD_DAO_SPAM_CHANNEL'])
+        channel = self.bot.get_channel(CHANNEL_IDS['DISCORD_DAO_CHAT_CHANNEL'])
         await channel.send(f":warning:The weekly DAO CALL is starting:bangbang: Join us in the voice channel:warning:")
 
     @commands.command(hidden=True)
@@ -117,13 +117,13 @@ class Reminder(commands.Cog):
                     self.scheduler.reschedule_job(job_id, trigger='date', run_date=run_date)
 
             elif trigger == 'interval':
-                weeks, days, hours, minutes, seconds = args
-                
+                weeks, days, hours, minutes, seconds, start_date = args
+                start_date = start_date if start_date != 'undefined' else None;
                 if not job:
-                    self.scheduler.add_job(func=func, trigger='interval', weeks=weeks, days=days, hours=hours, minutes=minutes, seconds=seconds, id=job_id)
+                    self.scheduler.add_job(func=func, trigger='interval', weeks=int(weeks), days=int(days), hours=int(hours), minutes=int(minutes), seconds=int(seconds), start_date=start_date, id=job_id)
                     return await ctx.send(f"Job did not exist, created new one: **{job_id}**")
                 else:
-                    self.scheduler.reschedule_job(job_id, trigger='interval', weeks=weeks, days=days, hours=hours, minutes=minutes, seconds=seconds)
+                    self.scheduler.reschedule_job(job_id, trigger='interval', weeks=int(weeks), days=int(days), hours=int(hours), minutes=int(minutes), seconds=int(seconds), start_date=start_date)
 
         except EVENT_JOB_ERROR:
             return await ctx.send("something went wrong with rescheduling...")
