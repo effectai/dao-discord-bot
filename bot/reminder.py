@@ -1,8 +1,10 @@
 
 import arrow
+import pytz
+import logging
 from apscheduler.events import EVENT_JOB_ERROR
 from bot.admin import Admin
-import logging
+from datetime import datetime
 from settings.defaults import CHANNEL_IDS
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from discord.ext import commands
@@ -69,9 +71,10 @@ class Reminder(commands.Cog):
                 break
 
     async def notify_dao_call(self):
-
-        channel = self.bot.get_channel(CHANNEL_IDS['DISCORD_DAO_CHAT_CHANNEL'])
-        await channel.send(f":warning:The weekly DAO CALL is starting:bangbang: Join us in the voice channel:warning:")
+        # check if current week is odd or even because of the bi-weekly call.
+        if datetime.now().isocalendar()[1] % 2 == 0:
+            channel = self.bot.get_channel(CHANNEL_IDS['DISCORD_DAO_CHAT_CHANNEL'])
+            await channel.send(f":alarm_clock: The bi-weekly DAO CALL is about to start. Come join us (we got cookies :cookie:).")
 
     @commands.command(hidden=True)
     async def reschedule(self, ctx, trigger='cron | date | interval', job_id="job_id", *args):
@@ -92,7 +95,7 @@ class Reminder(commands.Cog):
 
         try:
             if trigger == 'cron':
-                day_of_week, hour, minute = args
+                day, week, day_of_week, hour, minute = args
 
                 # for the reschedule_job you need first 3 chars of the weekdays.
                 if len(day_of_week) <= 3: return 
@@ -100,11 +103,11 @@ class Reminder(commands.Cog):
 
                 # create job when there is no job, else reschedule.
                 if not job:
-                    self.scheduler.add_job(func, trigger='cron', day_of_week=day_of_week, hour=hour, minute=minute, id=job_id)
+                    self.scheduler.add_job(func, trigger='cron', day=day, week=week, day_of_week=day_of_week, hour=hour, minute=minute, id=job_id)
                     return await ctx.send(f"Job did not exist, created new one: **{job_id}**")
                 
                 else:
-                    self.scheduler.reschedule_job(job_id, trigger='cron', day_of_week=day_of_week, hour=hour, minute=minute)
+                    self.scheduler.reschedule_job(job_id, trigger='cron', day=day, week=week, day_of_week=day_of_week, hour=hour, minute=minute)
 
 
             elif trigger == 'date':
@@ -148,7 +151,7 @@ class Reminder(commands.Cog):
         self.scheduler.start()
 
         # DAO call notification on discord.
-        self.scheduler.add_job(self.notify_dao_call, trigger='cron', day_of_week='wed', hour=15, minute=0, id="dao_call_notify")
+        self.scheduler.add_job(self.notify_dao_call, trigger='cron', start_date=datetime(2022, 4, 6, 15, 0, 0, 0, pytz.UTC), day_of_week='wed', hour=15, minute=0, id="dao_call_notify")
         self.scheduler.add_job(self.notify_vote_duration, 'date', run_date=vote_duration.datetime, id="dao_vote_notify")
         self.scheduler.add_job(self.check_new_cycle, trigger='interval', hours=1, id="dao_new_cycle_notify")
         self.scheduler.add_job(self.check_new_proposals, trigger='interval', hours=1, id="dao_new_proposals_notify")
