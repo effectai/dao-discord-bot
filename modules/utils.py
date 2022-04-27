@@ -68,5 +68,6 @@ def create_embed(self, data, inline=True):
 
 def is_BSC_address(address):
     return (len(address) == 42 or len(address) == 40)
+
 def name_to_hex(name):
     return hexlify(convert_little_endian(string_to_name(name), 'Q')).decode()
